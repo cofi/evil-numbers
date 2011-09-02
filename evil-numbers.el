@@ -39,18 +39,19 @@
   (save-match-data
     (if (not (or
               ;; numbers or format specifier in front
-              (looking-back (rx (or (+? digit)
-                                    (and "0" (or (and (in "bB") (*? (in "01")))
-                                                 (and (in "oO") (*? (in "0-7")))
-                                                 (and (in "xX") (*? (in "0-9A-Fa-f"))))))))
+              (and
+               (looking-back (rx (or (+? digit)
+                                     (and "0" (or (and (in "bB") (*? (in "01")))
+                                                  (and (in "oO") (*? (in "0-7")))
+                                                  (and (in "xX") (*? (in digit "A-Fa-f"))))))))
+               ;; being on a specifier is handled in progn
+               (not (looking-at "[bBoOxX]")))
               ;; search for number in rest of line
-              (re-search-forward (rx
-                                  (or
-                                   (and "0" (in "bB") (+? (in "01")))
-                                   (and "0" (in "oO") (+? (in "0-7")))
-                                   (and "0" (in "xX") (+? (in digit "a-fA-F")))
-                                   (or (and "0" (not (in "bBoOxX"))) (+? digit))))
-                                 (point-at-eol) t)))
+              (progn
+               ;; match 0 of specifier or digit, being in a literal and after specifier is handled above
+               (re-search-forward "[[:digit:]]" (point-at-eol) t)
+               ;; skip format specifiers
+               (skip-chars-forward "bBoOxX"))))
         (error "No number at point or until end of line")
       (or
        ;; find binary literals
