@@ -49,31 +49,15 @@
         (error "No number at point or until end of line")
       (or
        ;; find binary literals
-       (when (looking-back "0[bB][01]*")
-         (skip-chars-backward "01")
-         (search-forward-regexp "[01]*")
-         (replace-match
-          (evil-numbers/format-binary (+ amount (string-to-number (match-string 0) 2))
-                                      (- (match-end 0) (match-beginning 0))))
-         t)
+       (evil-numbers/search-and-replace "0[bB][01]*" "01" "\\([01]+\\)" amount 2)
 
        ;; find octal literals
-       (when (looking-back "0[oO][0-7]*")
-         (skip-chars-backward "01234567")
-         (search-forward-regexp "[0-7]+")
-         (replace-match
-          (format (format "%%0%do" (- (match-end 0) (match-beginning 0)))
-                  (+ amount (string-to-number (match-string 0) 8))))
-         t)
+       (evil-numbers/search-and-replace "0[oO][0-7]*" "01234567" "\\([0-7]+\\)" amount 8)
 
        ;; find hex literals
-       (when (looking-back "0[xX][0-9a-fA-F]*")
-         (skip-chars-backward "0123456789abcdefABCDEF")
-         (search-forward-regexp "[0-9a-fA-F]+")
-         (replace-match
-          (format (format "%%0%dX" (- (match-end 0) (match-beginning 0)))
-                  (+ amount (string-to-number (match-string 0) 16))))
-         t)
+       (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
+                                        "0123456789abcdefABCDEF"
+                                        "\\([0-9a-fA-F]+\\)" amount 16)
 
        ;; find decimal literals
        (progn
@@ -117,6 +101,24 @@ decimal: [0-9]+, e.g. 42 or 23"
      (re-search-forward "[[:digit:]]" (point-at-eol) t)
      ;; skip format specifiers and interpret as bool
      (<= 0 (skip-chars-forward "bBoOxX")))))
+
+(defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
+  "When looking back at `LOOK-BACK' skip chars `SKIP-BACK'backwards and replace number incremented by `INC' in `BASE' and return non-nil."
+  (when (looking-back look-back)
+    (skip-chars-backward skip-back)
+    (search-forward-regexp search-forward)
+    (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
+                                        (length (match-string 1))
+                                        base))
+    t))
+
+(defun evil-numbers/format (num width base)
+  "Format `NUM' with at least `WIDTH' space in `BASE'"
+  (cond
+   ((= base 2) (evil-numbers/format-binary num width))
+   ((= base 8) (format (format "%%0%do" width) num))
+   ((= base 16) (format (format "%%0%dX" width) num))
+   (t "")))
 
 (defun evil-numbers/format-binary (number &optional width fillchar)
   "Format `NUMBER' as binary.
