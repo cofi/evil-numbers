@@ -37,21 +37,7 @@
   "Increment the number at point by `amount'"
   (interactive "p*")
   (save-match-data
-    (if (not (or
-              ;; numbers or format specifier in front
-              (and
-               (looking-back (rx (or (+? digit)
-                                     (and "0" (or (and (in "bB") (*? (in "01")))
-                                                  (and (in "oO") (*? (in "0-7")))
-                                                  (and (in "xX") (*? (in digit "A-Fa-f"))))))))
-               ;; being on a specifier is handled in progn
-               (not (looking-at "[bBoOxX]")))
-              ;; search for number in rest of line
-              (progn
-               ;; match 0 of specifier or digit, being in a literal and after specifier is handled above
-               (re-search-forward "[[:digit:]]" (point-at-eol) t)
-               ;; skip format specifiers
-               (skip-chars-forward "bBoOxX"))))
+    (if (not (evil-numbers/search-number))
         (error "No number at point or until end of line")
       (or
        ;; find binary literals
@@ -92,6 +78,41 @@
            t))
        (error "No number at point")))))
 
+(defun evil-numbers/dec-at-pt (amount)
+  "Decrement the number at point by `amount'"
+  (interactive "p*")
+  (evil-numbers/inc-at-pt (- amount)))
+
+;;; utils
+
+(defun evil-numbers/search-number ()
+  "Return non-nil if a binary, octal, hexadecimal or decimal literal at or after point.
+If point is already within or after a literal it stays.
+
+The literals have to be in the following forms:
+binary: 0[bB][01]+, e.g. 0b101 or 0B0
+octal: 0[oO][0-7]+, e.g. 0o42 or 0O5
+hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0XCAFE
+decimal: [0-9]+, e.g. 42 or 23"
+  (or
+   ;; numbers or format specifier in front
+   (and
+    (looking-back (rx (or (+? digit)
+                          (and "0" (or (and (in "bB") (*? (in "01")))
+                                       (and (in "oO") (*? (in "0-7")))
+                                       (and (in "xX") (*? (in digit "A-Fa-f"))))))))
+    ;; being on a specifier is handled in progn
+    (not (looking-at "[bBoOxX]")))
+   ;; search for number in rest of line
+   (progn
+     ;; match 0 of specifier or digit, being in a literal and after specifier is handled above
+     (re-search-forward "[[:digit:]]" (point-at-eol) t)
+     ;; skip format specifiers and interpret as bool
+     (<= 0
+        (skip-chars-forward "bBoOxX")
+        )
+     )))
+
 (defun evil-numbers/format-binary (number &optional width fillchar)
   "Format `NUMBER' as binary.
 Fill up to `WIDTH' with `FILLCHAR' (defaults to ?0) if binary
@@ -107,10 +128,5 @@ representation of `NUMBER' is smaller."
                  (make-string (- width len) fillchar)
                "")
              nums))))
-
-(defun evil-numbers/dec-at-pt (amount)
-  "Decrement the number at point by `amount'"
-  (interactive "p*")
-  (evil-numbers/inc-at-pt (- amount)))
 
 (provide 'evil-numbers)
