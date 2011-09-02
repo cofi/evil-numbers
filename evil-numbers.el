@@ -37,47 +37,62 @@
   "Increment the number at point by `amount'"
   (interactive "p*")
   (save-match-data
-    (or
-     ;; find binary literals
-     (when (looking-back "0[bB][01]*")
-       ;; already ensured there's only one -
-       (skip-chars-backward "01")
-       (search-forward-regexp "[01]*")
-       (replace-match
-        (evil-numbers/format-binary (+ amount (string-to-number (match-string 0) 2))
-                                    (- (match-end 0) (match-beginning 0))))
-       t)
-
-     ;; find octal literals
-     (when (looking-back "0[oO]-?[0-7]*")
-       ;; already ensured there's only one -
-       (skip-chars-backward "-01234567")
-       (search-forward-regexp "-?\\([0-7]+\\)")
-       (replace-match
-        (format (format "%%0%do" (- (match-end 1) (match-beginning 1)))
-                (+ amount (string-to-number (match-string 0) 8))))
-       t)
-
-     ;; find hex literals
-     (when (looking-back "0[xX]-?[0-9a-fA-F]*")
-       ;; already ensured there's only one -
-       (skip-chars-backward "-0123456789abcdefABCDEF")
-       (search-forward-regexp "-?\\([0-9a-fA-F]+\\)")
-       (replace-match
-        (format (format "%%0%dX" (- (match-end 1) (match-beginning 1)))
-                (+ amount (string-to-number (match-string 0) 16))))
-       t)
-
-     ;; find decimal literals
-     (progn
-       (skip-chars-backward "0123456789")
-       (skip-chars-backward "-")
-       (when (looking-at "-?\\([0-9]+\\)")
+    (if (not (or
+              ;; numbers or format specifier in front
+              (looking-back (rx (or (+? digit)
+                                    (and "0" (or (and (in "bB") (*? (in "01")))
+                                                 (and (in "oO") (*? (in "0-7")))
+                                                 (and (in "xX") (*? (in "0-9A-Fa-f"))))))))
+              ;; search for number in rest of line
+              (re-search-forward (rx
+                                  (or
+                                   (and "0" (in "bB") (+? (in "01")))
+                                   (and "0" (in "oO") (+? (in "0-7")))
+                                   (and "0" (in "xX") (+? (in digit "a-fA-F")))
+                                   (or (and "0" (not (in "bBoOxX"))) (+? digit))))
+                                 (point-at-eol) t)))
+        (error "No number at point or until end of line")
+      (or
+       ;; find binary literals
+       (when (looking-back "0[bB][01]*")
+         ;; already ensured there's only one -
+         (skip-chars-backward "01")
+         (search-forward-regexp "[01]*")
          (replace-match
-          (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
-                  (+ amount (string-to-number (match-string 0) 10))))
-         t))
-     (error "No number at point"))))
+          (evil-numbers/format-binary (+ amount (string-to-number (match-string 0) 2))
+                                      (- (match-end 0) (match-beginning 0))))
+         t)
+
+       ;; find octal literals
+       (when (looking-back "0[oO]-?[0-7]*")
+         ;; already ensured there's only one -
+         (skip-chars-backward "-01234567")
+         (search-forward-regexp "-?\\([0-7]+\\)")
+         (replace-match
+          (format (format "%%0%do" (- (match-end 1) (match-beginning 1)))
+                  (+ amount (string-to-number (match-string 0) 8))))
+         t)
+
+       ;; find hex literals
+       (when (looking-back "0[xX]-?[0-9a-fA-F]*")
+         ;; already ensured there's only one -
+         (skip-chars-backward "-0123456789abcdefABCDEF")
+         (search-forward-regexp "-?\\([0-9a-fA-F]+\\)")
+         (replace-match
+          (format (format "%%0%dX" (- (match-end 1) (match-beginning 1)))
+                  (+ amount (string-to-number (match-string 0) 16))))
+         t)
+
+       ;; find decimal literals
+       (progn
+         (skip-chars-backward "0123456789")
+         (skip-chars-backward "-")
+         (when (looking-at "-?\\([0-9]+\\)")
+           (replace-match
+            (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
+                    (+ amount (string-to-number (match-string 0) 10))))
+           t))
+       (error "No number at point")))))
 
 (defun evil-numbers/format-binary (number &optional width fillchar)
   "Format `NUMBER' as binary.
