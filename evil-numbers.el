@@ -76,7 +76,7 @@
             (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
                     (+ amount (string-to-number (match-string 0) 10))))
            t))
-       (error "No number at point")))))
+       (error "No number at point or until end of line")))))
 
 (defun evil-numbers/dec-at-pt (amount)
   "Decrement the number at point by `amount'"
