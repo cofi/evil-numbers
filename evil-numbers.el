@@ -3,7 +3,7 @@
 ;; Copyright (C) 2011 by Michael Markert
 ;; Author: 2011 Michael Markert <markert.michael@googlemail.com>
 ;; Created: 2011-09-02
-;; Version: 0.
+;; Version: 0.1
 ;; Keywords: numbers increment decrement octal hex binary
 
 ;; This file is not part of GNU Emacs.
