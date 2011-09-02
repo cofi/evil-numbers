@@ -98,9 +98,9 @@ Fill up to `WIDTH' with `FILLCHAR' (defaults to ?0) if binary
 representation of `NUMBER' is smaller."
   (let (nums
         (fillchar (or fillchar ?0)))
-    (do ((num number (truncate num 2)))
-        ((= num 0))
-      (push (number-to-string (% num 2)) nums))
+    (while (> number 0)
+      (push (number-to-string (% number 2)) nums)
+      (setq number (truncate number 2)))
     (let ((len (length nums)))
       (apply #'concat
              (if (and width (< len width))
