@@ -115,4 +115,4 @@ representation of `NUMBER' is smaller."
   (interactive "p*")
   (evil-numbers/inc-at-pt (- amount)))
 
-(provide evil-numbers)
+(provide 'evil-numbers)
