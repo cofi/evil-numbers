@@ -34,7 +34,7 @@
 ;; Git-Repository: git://github.com/cofi/evil-numbers.git
 
 (defun evil-numbers/inc-at-pt (amount)
-  "Increment the number at point by `amount'"
+  "Increment the number at point or after point before end-of-line by `amount'"
   (interactive "p*")
   (save-match-data
     (if (not (evil-numbers/search-number))
@@ -79,7 +79,7 @@
        (error "No number at point or until end of line")))))
 
 (defun evil-numbers/dec-at-pt (amount)
-  "Decrement the number at point by `amount'"
+  "Decrement the number at point or after point before end-of-line by `amount'"
   (interactive "p*")
   (evil-numbers/inc-at-pt (- amount)))
 
@@ -108,10 +108,7 @@ decimal: [0-9]+, e.g. 42 or 23"
      ;; match 0 of specifier or digit, being in a literal and after specifier is handled above
      (re-search-forward "[[:digit:]]" (point-at-eol) t)
      ;; skip format specifiers and interpret as bool
-     (<= 0
-        (skip-chars-forward "bBoOxX")
-        )
-     )))
+     (<= 0 (skip-chars-forward "bBoOxX")))))
 
 (defun evil-numbers/format-binary (number &optional width fillchar)
   "Format `NUMBER' as binary.
