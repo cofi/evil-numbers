@@ -92,7 +92,7 @@ If point is already within or after a literal it stays.
 The literals have to be in the following forms:
 binary: 0[bB][01]+, e.g. 0b101 or 0B0
 octal: 0[oO][0-7]+, e.g. 0o42 or 0O5
-hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0XCAFE
+hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
 decimal: [0-9]+, e.g. 42 or 23"
   (or
    ;; numbers or format specifier in front
