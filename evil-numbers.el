@@ -27,8 +27,18 @@
 ;; See http://github.com/cofi/evil-numbers/issues
 
 ;; Install:
+;; (require 'evil-numbers)
+
+;; and bind, for example:
+;; (global-define-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
+;; (global-define-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
+
+;; or only in evil's normal state:
+;; (define-key 'evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
+;; (define-key 'evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
 
 ;; Usage:
+;; Go and play with your numbers!
 
 ;; Homepage: http://github.com/cofi/evil-numbers
 ;; Git-Repository: git://github.com/cofi/evil-numbers.git
