@@ -32,8 +32,8 @@
 ;; (global-define-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
 
 ;; or only in evil's normal state:
-;; (define-key 'evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
-;; (define-key 'evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
+;; (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
+;; (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
 
 ;; Usage:
 ;; Go and play with your numbers!
