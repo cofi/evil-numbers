@@ -96,11 +96,17 @@ decimal: [0-9]+, e.g. 42 or 23"
     ;; being on a specifier is handled in progn
     (not (looking-at "[bBoOxX]")))
    ;; search for number in rest of line
-   (progn
-     ;; match 0 of specifier or digit, being in a literal and after specifier is handled above
-     (re-search-forward "[[:digit:]]" (point-at-eol) t)
-     ;; skip format specifiers and interpret as bool
-     (<= 0 (skip-chars-forward "bBoOxX")))))
+   ;; match 0 of specifier or digit, being in a literal and after specifier is
+   ;; handled above
+   (and
+	(re-search-forward "[[:digit:]]" (point-at-eol) t)
+	(or
+	 (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
+	 (/= (char-before) ?0)
+	 (and (> (point) 2)				; Should also take bofp into consideration
+		  (not (looking-back "\\W0" 2)))
+	 ;; skip format specifiers and interpret as bool
+	 (<= 0 (skip-chars-forward "bBoOxX"))))))
 
 (defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
   "When looking back at `LOOK-BACK' skip chars `SKIP-BACK'backwards and replace number incremented by `INC' in `BASE' and return non-nil."
