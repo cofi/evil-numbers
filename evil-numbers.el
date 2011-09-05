@@ -67,6 +67,8 @@
            (replace-match
             (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
                     (+ amount (string-to-number (match-string 0) 10))))
+		   ;; Moves point one position back to conform with Vim
+		   (forward-char -1)
            t))
        (error "No number at point or until end of line")))))
 
@@ -116,6 +118,8 @@ decimal: [0-9]+, e.g. 42 or 23"
     (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
                                         (length (match-string 1))
                                         base))
+	;; Moves point one position back to conform with Vim
+	(forward-char -1)
     t))
 
 (defun evil-numbers/format (num width base)
