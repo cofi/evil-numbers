@@ -3,6 +3,7 @@
 ;; Copyright (C) 2011 by Michael Markert
 ;; Author: Michael Markert <markert.michael@googlemail.com>
 ;; URL: http://github.com/cofi/evil-numbers
+;; Git-Repository: git://github.com/cofi/evil-numbers.git
 ;; Created: 2011-09-02
 ;; Version: 0.2
 ;; Keywords: numbers increment decrement octal hex binary
@@ -48,9 +49,6 @@
 
 ;; Usage:
 ;; Go and play with your numbers!
-
-;; Homepage: http://github.com/cofi/evil-numbers
-;; Git-Repository: git://github.com/cofi/evil-numbers.git
 
 ;;; Code:
 
