@@ -54,6 +54,7 @@
 
 ;;; Code:
 
+;;;###autoload
 (defun evil-numbers/inc-at-pt (amount)
   "Increment the number at point or after point before end-of-line by `amount'"
   (interactive "p*")
@@ -85,6 +86,7 @@
            t))
        (error "No number at point or until end of line")))))
 
+;;;###autoload
 (defun evil-numbers/dec-at-pt (amount)
   "Decrement the number at point or after point before end-of-line by `amount'"
   (interactive "p*")
