@@ -1,7 +1,7 @@
-;; evil-numbers.el --- increment/decrement numbers like in vim
+;;; evil-numbers.el --- increment/decrement numbers like in vim
 
 ;; Copyright (C) 2011 by Michael Markert
-;; Author: 2011 Michael Markert <markert.michael@googlemail.com>
+;; Author: Michael Markert <markert.michael@googlemail.com>
 ;; URL: http://github.com/cofi/evil-numbers
 ;; Created: 2011-09-02
 ;; Version: 0.2
@@ -33,13 +33,16 @@
 ;; See http://github.com/cofi/evil-numbers/issues
 
 ;; Install:
+
 ;; (require 'evil-numbers)
 
 ;; and bind, for example:
+
 ;; (global-define-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
 ;; (global-define-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
 
 ;; or only in evil's normal state:
+
 ;; (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
 ;; (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
 
