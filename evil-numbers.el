@@ -1,7 +1,8 @@
-;; evil-numbers -- increment/decrement numbers like in vim
+;; evil-numbers.el --- increment/decrement numbers like in vim
 
 ;; Copyright (C) 2011 by Michael Markert
 ;; Author: 2011 Michael Markert <markert.michael@googlemail.com>
+;; URL: http://github.com/cofi/evil-numbers
 ;; Created: 2011-09-02
 ;; Version: 0.2
 ;; Keywords: numbers increment decrement octal hex binary
@@ -20,6 +21,13 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; Increment / Decrement binary, octal, decimal and hex literals
+
+;; works like C-a/C-x in vim, i.e. searches for number up to eol and then
+;; increments or decrements and keep zero padding up
 
 ;; Known Bugs:
 ;; See http://github.com/cofi/evil-numbers/issues
@@ -40,6 +48,8 @@
 
 ;; Homepage: http://github.com/cofi/evil-numbers
 ;; Git-Repository: git://github.com/cofi/evil-numbers.git
+
+;;; Code:
 
 (defun evil-numbers/inc-at-pt (amount)
   "Increment the number at point or after point before end-of-line by `amount'"
@@ -147,3 +157,4 @@ representation of `NUMBER' is smaller."
              nums))))
 
 (provide 'evil-numbers)
+;;; evil-numbers.el ends here
