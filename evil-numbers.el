@@ -39,8 +39,8 @@
 
 ;; and bind, for example:
 
-;; (global-define-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
-;; (global-define-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
+;; (global-set-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
+;; (global-set-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
 
 ;; or only in evil's normal state:
 
