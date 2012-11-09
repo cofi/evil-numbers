@@ -103,13 +103,10 @@ hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
 decimal: [0-9]+, e.g. 42 or 23"
   (or
    ;; numbers or format specifier in front
-   (and
-    (looking-back (rx (or (+? digit)
-                          (and "0" (or (and (in "bB") (*? (in "01")))
-                                       (and (in "oO") (*? (in "0-7")))
-                                       (and (in "xX") (*? (in digit "A-Fa-f"))))))))
-    ;; being on a specifier is handled in progn
-    (not (looking-at "[bBoOxX]")))
+   (looking-back (rx (or (+? digit)
+                        (and "0" (or (and (in "bB") (*? (in "01")))
+                                  (and (in "oO") (*? (in "0-7")))
+                                  (and (in "xX") (*? (in digit "A-Fa-f"))))))))
    ;; search for number in rest of line
    ;; match 0 of specifier or digit, being in a literal and after specifier is
    ;; handled above
