@@ -53,36 +53,50 @@
 ;;; Code:
 
 ;;;###autoload
-(defun evil-numbers/inc-at-pt (amount)
+(defun evil-numbers/inc-at-pt (amount &optional no-region)
   "Increment the number at point or after point before end-of-line by `amount'"
   (interactive "p*")
-  (save-match-data
-    (if (not (evil-numbers/search-number))
-        (error "No number at point or until end of line")
-      (or
-       ;; find binary literals
-       (evil-numbers/search-and-replace "0[bB][01]*" "01" "\\([01]+\\)" amount 2)
+  (cond
+   ((and (not no-region) (region-active-p))
+    (let (deactivate-mark
+          (rb (region-beginning))
+          (re (region-end)))
+      (save-excursion
+        (save-match-data
+          (goto-char rb)
+          (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" re t)
+            (evil-numbers/inc-at-pt amount 'no-region)
+            ;; Undo vim compatability.
+            (forward-char 1)
+            )))))
+   (t
+    (save-match-data
+      (if (not (evil-numbers/search-number))
+          (error "No number at point or until end of line")
+        (or
+         ;; find binary literals
+         (evil-numbers/search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
 
-       ;; find octal literals
-       (evil-numbers/search-and-replace "0[oO][0-7]*" "01234567" "\\([0-7]+\\)" amount 8)
+         ;; find octal literals
+         (evil-numbers/search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
 
-       ;; find hex literals
-       (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
-                                        "0123456789abcdefABCDEF"
-                                        "\\([0-9a-fA-F]+\\)" amount 16)
+         ;; find hex literals
+         (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
+                                          "0123456789abcdefABCDEF"
+                                          "\\([0-9a-fA-F]+\\)" amount 16)
 
-       ;; find decimal literals
-       (progn
-         (skip-chars-backward "0123456789")
-         (skip-chars-backward "-")
-         (when (looking-at "-?\\([0-9]+\\)")
-           (replace-match
-            (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
-                    (+ amount (string-to-number (match-string 0) 10))))
-		   ;; Moves point one position back to conform with Vim
-		   (forward-char -1)
-           t))
-       (error "No number at point or until end of line")))))
+         ;; find decimal literals
+         (progn
+           (skip-chars-backward "0123456789")
+           (skip-chars-backward "-")
+           (when (looking-at "-?\\([0-9]+\\)")
+             (replace-match
+              (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
+                      (+ amount (string-to-number (match-string 0) 10))))
+             ;; Moves point one position back to conform with Vim
+             (forward-char -1)
+             t))
+         (error "No number at point or until end of line")))))))
 
 ;;;###autoload
 (defun evil-numbers/dec-at-pt (amount)
