@@ -67,8 +67,7 @@
           (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" re t)
             (evil-numbers/inc-at-pt amount 'no-region)
             ;; Undo vim compatability.
-            (forward-char 1)
-            )))))
+            (forward-char 1))))))
    (t
     (save-match-data
       (if (not (evil-numbers/search-number))
