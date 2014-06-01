@@ -54,7 +54,14 @@
 
 ;;;###autoload
 (defun evil-numbers/inc-at-pt (amount &optional no-region)
-  "Increment the number at point or after point before end-of-line by `amount'"
+  "Increment the number at point or after point before end-of-line by `amount'.
+When region is selected, increment all numbers in the region by `amount'
+
+NO-REGION is internal flag that allows
+`evil-numbers/inc-at-point' to be called recursively when
+applying the regional features of `evil-numbers/inc-at-point'.
+
+"
   (interactive "p*")
   (cond
    ((and (not no-region) (region-active-p))
@@ -100,7 +107,11 @@
 
 ;;;###autoload
 (defun evil-numbers/dec-at-pt (amount)
-  "Decrement the number at point or after point before end-of-line by `amount'"
+  "Decrement the number at point or after point before end-of-line by `amount'.
+
+If a region is active, decrement all the numbers at a point by `amount'.
+
+This function uses `evil-numbers/inc-at-pt'"
   (interactive "p*")
   (evil-numbers/inc-at-pt (- amount)))
 
