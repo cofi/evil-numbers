@@ -8,7 +8,7 @@
 ;; URL: http://github.com/cofi/evil-numbers
 ;; Git-Repository: git://github.com/cofi/evil-numbers.git
 ;; Created: 2011-09-02
-;; Version: 0.3
+;; Version: 0.4
 ;; Keywords: numbers increment decrement octal hex binary
 
 ;; This file is not part of GNU Emacs.
