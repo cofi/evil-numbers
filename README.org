@@ -33,3 +33,7 @@
 
 ** Known Bugs
    See http://github.com/cofi/evil-numbers/issues
+
+** Contributors
+   Matthew Fidler <matthew.fidler@gmail.com>
+   Michael Markert <markert.michael@gmail.com>

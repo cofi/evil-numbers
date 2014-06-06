@@ -2,6 +2,9 @@
 
 ;; Copyright (C) 2011 by Michael Markert
 ;; Author: Michael Markert <markert.michael@googlemail.com>
+;; Contributors:
+;;               Matthew Fidler <matthew.fidler@gmail.com>
+;;               Michael Markert <markert.michael@gmail.com>
 ;; URL: http://github.com/cofi/evil-numbers
 ;; Git-Repository: git://github.com/cofi/evil-numbers.git
 ;; Created: 2011-09-02
