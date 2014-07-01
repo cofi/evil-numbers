@@ -2,7 +2,9 @@
   - Increment / Decrement binary, octal, decimal and hex literals
 
   - works like C-a/C-x in vim, i.e. searches for number up to eol and then
-    increments or decrements and keep zero padding up (unlike in vim)
+    increments or decrements and keep zero padding up (unlike in
+    vim), except for decimals in vectors like =x[10]= -> =x[9]=. The
+    pairs that define vectors can be customized with =evil-numbers-dont-pad-matching-pairs-for-decimal-numbers=
 
   - When a region is active, as in evil's visual mode, all the
     numbers within that region will be incremented/decremented (unlike
@@ -29,7 +31,15 @@
    #+END_SRC
 
 ** Usage
-   Position cursor on literal and play with your numbers!
+   Position cursor on literal and play with your numbers!  
+
+   If you don't like vim's behavior of moving a character backward
+   after replacement, then you can turn it off with
+
+#+BEGIN_SRC emacs-lisp
+  (setq evil-numbers-dont-move-backward-to-match-vim t)
+#+END_SRC
+
 
 ** Known Bugs
    See http://github.com/cofi/evil-numbers/issues
