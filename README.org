@@ -28,6 +28,14 @@
     (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
    #+END_SRC
 
+   For window system users the keypad =+= and =-= present an alternative that can be
+   directly bound without shadowing the regular =+= and =-=:
+
+   #+BEGIN_SRC emacs-lisp
+   (define-key evil-normal-state-map (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
+   (define-key evil-normal-state-map (kbd "<kp-subtract>") 'evil-numbers/dec-at-pt)
+   #+END_SRC
+
 ** Usage
    Position cursor on literal and play with your numbers!
 
