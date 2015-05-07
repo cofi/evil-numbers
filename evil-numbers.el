@@ -71,16 +71,16 @@ applying the regional features of `evil-numbers/inc-at-point'.
   (interactive "p*")
   (cond
    ((and (not no-region) (region-active-p))
-    (let (deactivate-mark
-          (rb (region-beginning))
-          (re (region-end)))
+    (let (deactivate-mark)
       (save-excursion
         (save-match-data
-          (goto-char rb)
-          (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" re t)
-            (evil-numbers/inc-at-pt amount 'no-region)
-            ;; Undo vim compatability.
-            (forward-char 1)))))
+          (save-restriction
+            (narrow-to-region (region-beginning) (region-end))
+            (goto-char (point-min))
+            (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" nil t)
+              (evil-numbers/inc-at-pt amount 'no-region)
+              ;; Undo vim compatability.
+              (forward-char 1))))))
     (setq deactivate-mark t))
    (t
     (save-match-data
