@@ -1,4 +1,4 @@
-;;; evil-numbers.el --- increment/decrement numbers like in vim
+;;; evil-numbers.el --- increment/decrement numbers like in vim   -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2011 by Michael Markert
 ;; Author: Michael Markert <markert.michael@googlemail.com>
@@ -42,8 +42,9 @@
 
 ;; and bind, for example:
 
-;; (global-set-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
-;; (global-set-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
+;; (global-set-key (kbd "C-c C-+") 'evil-numbers/adjust)
+;; (global-set-key (kbd "C-c C-=") 'evil-numbers/adjust)
+;; (global-set-key (kbd "C-c C--") 'evil-numbers/adjust)
 
 ;; or only in evil's normal and visual state:
 
@@ -57,6 +58,46 @@
 ;; Go and play with your numbers!
 
 ;;; Code:
+
+;;;###autoload
+(defun evil-numbers/adjust (amount)
+  "Adjust the number at point of the default face by AMOUNT.
+
+AMOUNT may be passed as a numeric prefix argument.
+
+The actual adjustment made depends on the final component of the
+key-binding used to invoke the command, with all modifiers removed:
+
+   +, =   Increase the default face height by one step
+   -      Decrease the default face height by one step
+
+After adjusting, continue to read input events and further adjust
+the number as long as the input event read \(with all modifiers
+removed) is one of the above characters.
+
+This command is a special-purpose wrapper around the
+`evil-numbers/inc-at-pt' command which makes repetition convenient
+even when it is bound in a non-top-level keymap.  For binding in
+a top-level keymap, `evil-numbers/inc-at-pt' or
+`evil-numbers/dec-at-pt' may be more appropriate."
+  (interactive "p*")
+  (let ((ev last-command-event)
+	(echo-keystrokes nil))
+    (let* ((base (event-basic-type ev))
+           (step
+            (pcase base
+              ((or ?+ ?=) amount)
+              (?- (- amount))
+              (t amount))))
+      (evil-numbers/inc-at-pt step)
+      (message "Use +,- for further adjustment")
+      (set-transient-map
+       (let ((map (make-sparse-keymap)))
+         (dolist (mods '(() (control)))
+           (dolist (key '(?- ?+ ?= )) ;; = is often unshifted +.
+             (define-key map (vector (append mods (list key)))
+               (lambda () (interactive) (evil-numbers/adjust (abs amount))))))
+         map)))))
 
 ;;;###autoload
 (defun evil-numbers/inc-at-pt (amount &optional no-region)

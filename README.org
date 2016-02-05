@@ -17,8 +17,9 @@
    Put in =load-path=, =(require 'evil-numbers)= and bind, for example:
 
    #+BEGIN_SRC emacs-lisp
-     (global-set-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
-     (global-set-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
+     (global-set-key (kbd "C-c C-+") 'evil-numbers/adjust)
+     (global-set-key (kbd "C-c C-=") 'evil-numbers/adjust)
+     (global-set-key (kbd "C-c C--") 'evil-numbers/adjust)
    #+END_SRC
 
    or only in evil's normal state:
