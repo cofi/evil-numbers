@@ -59,7 +59,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun evil-numbers/inc-at-pt (amount &optional no-region)
+(defun evil-numbers/inc-at-pt (amount &optional no-region &optional incremental)
   "Increment the number at point or after point before end-of-line by `amount'.
 When region is selected, increment all numbers in the region by `amount'
 
@@ -67,18 +67,23 @@ NO-REGION is internal flag that allows
 `evil-numbers/inc-at-point' to be called recursively when
 applying the regional features of `evil-numbers/inc-at-point'.
 
+INCREMENTAL causes the first number to be increased by 1*amount, the second by
+2*amount and so on.
+
 "
   (interactive "p*")
   (cond
    ((and (not no-region) (region-active-p))
     (let (deactivate-mark
           (rb (region-beginning))
-          (re (region-end)))
+          (re (region-end))
+          (count 1))
       (save-excursion
         (save-match-data
           (goto-char rb)
           (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" re t)
-            (evil-numbers/inc-at-pt amount 'no-region)
+            (evil-numbers/inc-at-pt (* amount count) 'no-region)
+            (if incremental (setq count (+ count 1)))
             ;; Undo vim compatability.
             (forward-char 1)))))
     (setq deactivate-mark t))
@@ -120,6 +125,23 @@ If a region is active, decrement all the numbers at a point by `amount'.
 This function uses `evil-numbers/inc-at-pt'"
   (interactive "p*")
   (evil-numbers/inc-at-pt (- amount)))
+
+;;;###autoload
+(defun evil-numbers/inc-at-pt-incremental (amount)
+  "Increment the number at point or after point before end-of-line by `amount'.
+
+If a region is active, increment all the numbers at a point by `amount'*n, where
+`n' is the index of the number among the numbers in the region, starting at 1.
+That is increment the first number by `amount', the second by 2*`amount', and so
+on."
+  (interactive "p*")
+  (evil-numbers/inc-at-pt amount nil 'incremental))
+
+;;;###autoload
+(defun evil-numbers/dec-at-pt-incremental (amount)
+  "Like `evil-numbers/inc-at-pt-incremental' but with negated argument `amount'"
+  (interactive "p*")
+  (evil-numbers/inc-at-pt-incremental (- amount)))
 
 ;;; utils
 
