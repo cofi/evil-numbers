@@ -8,6 +8,8 @@
     numbers within that region will be incremented/decremented (unlike
     in vim)
 
+  - Increment/decrement numbers incrementally like g C-a/g C-x in vim.
+
 ** Detected Literals
     - binary, e.g. =0b0101=, =0B0101=
     - octal, e.g. =0o755=, =0O700=
@@ -19,6 +21,8 @@
    #+BEGIN_SRC emacs-lisp
      (global-set-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
      (global-set-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
+     (global-set-key (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+     (global-set-key (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
    or only in evil's normal state:
@@ -26,6 +30,8 @@
    #+BEGIN_SRC emacs-lisp
     (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
     (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
+    (define-key evil-normal-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+    (define-key evil-normal-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
    For window system users the keypad =+= and =-= present an alternative that can be
@@ -34,6 +40,8 @@
    #+BEGIN_SRC emacs-lisp
    (define-key evil-normal-state-map (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
    (define-key evil-normal-state-map (kbd "<kp-subtract>") 'evil-numbers/dec-at-pt)
+   (define-key evil-normal-state-map (kbd "C-<kp-add>") 'evil-numbers/inc-at-pt-incremental)
+   (define-key evil-normal-state-map (kbd "C-<kp-subtract>") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
 ** Usage
