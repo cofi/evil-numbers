@@ -58,6 +58,29 @@
 
 ;;; Code:
 
+(defun evil-number-to-superscript (number)
+  "Turn NUMBER like 29 into superscript like ²⁹.
+If argument is a string, uses `number-to-string' on it."
+  (let ((number (if (numberp number)
+                    number
+                  (number-to-string number))))
+    (concat
+     (mapcar (lambda (digit)
+               (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" (- digit 48)))
+             (number-to-string number)))))
+
+(defun evil-superscript-to-number (string)
+  "Turn a superscript-number STRING like ²⁹ into a regular number like 29."
+  (let ((map                            ; (⁰ . ?0)
+         (mapcar (lambda (i) (cons (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)
+                              (aref (number-to-string i) 0)))
+                 (number-sequence 0 9))))
+    (string-to-number
+     (concat
+      (mapcar (lambda (c)
+                (cdr (assoc c map)))
+              string)))))
+
 ;;;###autoload
 (defun evil-numbers/inc-at-pt (amount &optional no-region)
   "Increment the number at point or after point before end-of-line by `amount'.
@@ -77,7 +100,7 @@ applying the regional features of `evil-numbers/inc-at-point'.
       (save-excursion
         (save-match-data
           (goto-char rb)
-          (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" re t)
+          (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\|⁻?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\)" re t)
             (evil-numbers/inc-at-pt amount 'no-region)
             ;; Undo vim compatability.
             (forward-char 1)))))
@@ -97,7 +120,17 @@ applying the regional features of `evil-numbers/inc-at-point'.
          (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
                                           "0123456789abcdefABCDEF"
                                           "\\([0-9a-fA-F]+\\)" amount 16)
-
+         ;; find superscript literals
+         (progn
+           (skip-chars-backward "⁰¹²³⁴⁵⁶⁷⁸⁹")
+           (when (looking-at "⁻?\\([⁰¹²³⁴⁵⁶⁷⁸⁹]+\\)")
+             (replace-match
+              (format (format "%%0%ds" (- (match-end 1) (match-beginning 1)))
+                      (evil-number-to-superscript
+                       (+ amount (evil-superscript-to-number (match-string 0))))))
+             ;; Moves point one position back to conform with Vim
+             (forward-char -1)
+             t))
          ;; find decimal literals
          (progn
            (skip-chars-backward "0123456789")
@@ -135,6 +168,7 @@ decimal: [0-9]+, e.g. 42 or 23"
   (or
    ;; numbers or format specifier in front
    (looking-back (rx (or (+? digit)
+                         (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
                         (and "0" (or (and (in "bB") (*? (in "01")))
                                   (and (in "oO") (*? (in "0-7")))
                                   (and (in "xX") (*? (in digit "A-Fa-f"))))))))
@@ -142,7 +176,7 @@ decimal: [0-9]+, e.g. 42 or 23"
    ;; match 0 of specifier or digit, being in a literal and after specifier is
    ;; handled above
    (and
-	(re-search-forward "[[:digit:]]" (point-at-eol) t)
+	(re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹]" (point-at-eol) t)
 	(or
 	 (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
 	 (/= (char-before) ?0)
