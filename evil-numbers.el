@@ -59,7 +59,7 @@
 ;;; Code:
 
 ;;;###autoload
-(defun evil-numbers/inc-at-pt (amount &optional no-region &optional incremental)
+(defun evil-numbers/inc-at-pt (amount &optional no-region incremental)
   "Increment the number at point or after point before end-of-line by `amount'.
 When region is selected, increment all numbers in the region by `amount'
 
