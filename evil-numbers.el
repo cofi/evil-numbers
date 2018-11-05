@@ -75,13 +75,11 @@ INCREMENTAL causes the first number to be increased by 1*amount, the second by
   (cond
    ((and (not no-region) (region-active-p))
     (let (deactivate-mark
-          (rb (region-beginning))
-          (re (region-end))
           (count 1))
       (save-excursion
         (save-match-data
-          (goto-char rb)
-          (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" re t)
+          (if (< (mark) (point)) (exchange-point-and-mark))
+          (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" (region-end) t)
             (evil-numbers/inc-at-pt (* amount count) 'no-region)
             (if incremental (setq count (+ count 1)))
             ;; Undo vim compatability.
