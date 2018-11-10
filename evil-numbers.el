@@ -86,11 +86,16 @@ INCREMENTAL causes the first number to be increased by 1*amount, the second by
            (lambda (beg end)
              (evil-with-restriction beg end
                (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\)" nil t)
+                 ;; Backward char, to cancel out the forward-char below. We need
+                 ;; this, as re-search-forwards puts us behind the match.
+                 (backward-char)
                  (evil-numbers/inc-at-pt (* amount count) nil nil nil)
                  (if incremental (setq count (+ count 1)))
                  ;; Undo vim compatability.
                  (forward-char 1)))))))))
    (t (save-match-data
+        ;; forward-char, so that we do not match the number directly behind us.
+        (forward-char)
         (if (not (evil-numbers/search-number))
             (error "No number at point or until end of line")
           (or
