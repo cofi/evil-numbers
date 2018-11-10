@@ -58,28 +58,35 @@
 
 ;;; Code:
 
+(defconst evil-superscript-alist
+  (cons
+   (cons ?⁻ ?-)
+   (cons
+    (cons ?⁺ ?+)
+    (mapcar (lambda (i) (cons (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)
+                              (string-to-char (number-to-string i))))
+            (number-sequence 0 9)))))
+
 (defun evil-number-to-superscript (number)
   "Turn NUMBER like 29 into superscript like ²⁹.
 If argument is a string, uses `number-to-string' on it."
   (let ((number (if (numberp number)
-                    number
-                  (number-to-string number))))
+                    (number-to-string number)
+                  number)))
     (concat
      (mapcar (lambda (digit)
-               (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" (- digit 48)))
-             (number-to-string number)))))
+               (cdr (assoc digit (mapcar
+                                  (lambda (x) (cons (cdr x) (car x)))
+                                  evil-superscript-alist))))
+             number))))
 
 (defun evil-superscript-to-number (string)
   "Turn a superscript-number STRING like ²⁹ into a regular number like 29."
-  (let ((map                            ; (⁰ . ?0)
-         (mapcar (lambda (i) (cons (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)
-                              (aref (number-to-string i) 0)))
-                 (number-sequence 0 9))))
-    (string-to-number
-     (concat
-      (mapcar (lambda (c)
-                (cdr (assoc c map)))
-              string)))))
+  (string-to-number
+   (concat
+    (mapcar (lambda (c)
+              (cdr (assoc c evil-superscript-alist)))
+            string))))
 
 ;;;###autoload
 (evil-define-operator evil-numbers/inc-at-pt (amount beg end type &optional incremental)
@@ -134,27 +141,37 @@ INCREMENTAL causes the first number to be increased by 1*amount, the second by
                                             "\\([0-9a-fA-F]+\\)" amount 16)
 
            ;; find superscript literals
-           (progn
-             (skip-chars-backward "⁰¹²³⁴⁵⁶⁷⁸⁹")
-             (when (looking-at "⁻?\\([⁰¹²³⁴⁵⁶⁷⁸⁹]+\\)")
-               (replace-match
-                (format (format "%%0%ds" (- (match-end 1) (match-beginning 1)))
-                        (evil-number-to-superscript
-                         (+ amount (evil-superscript-to-number (match-string 0))))))
-               ;; Moves point one position back to conform with Vim
-               (forward-char -1)
-               t))
-           ;; find decimal literals
-           (progn
-             (skip-chars-backward "0123456789")
-             (skip-chars-backward "-")
-             (when (looking-at "-?\\([0-9]+\\)")
-               (replace-match
-                (format (format "%%0%dd" (- (match-end 1) (match-beginning 1)))
-                        (+ amount (string-to-number (match-string 0) 10))))
-               ;; Moves point one position back to conform with Vim
-               (forward-char -1)
-               t))
+           (let ((pad
+                  (lambda (len sign arg)
+                    (format
+                     (format "%%%s0%dd" (if sign "+" "") len)
+                     arg))))
+             (progn
+               (skip-chars-backward "⁺⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+               (when (looking-at "\\(⁻\\|⁺\\)?[⁰¹²³⁴⁵⁶⁷⁸⁹]+")
+                 (replace-match
+                  (evil-number-to-superscript
+                   (funcall
+                    pad
+                    (- (match-end 0) (match-beginning 0))
+                    (memq (string-to-char (match-string 0)) '(?⁺ ?⁻))
+                    (+ amount (evil-superscript-to-number (match-string 0))))))
+                 ;; Moves point one position back to conform with Vim
+                 (forward-char -1)
+                 t))
+             ;; find decimal literals
+             (progn
+               (skip-chars-backward "+-0123456789")
+               (when (looking-at "\\(-\\|+\\)?[0-9]+")
+                 (replace-match
+                  (funcall
+                   pad
+                   (- (match-end 0) (match-beginning 0))
+                   (memq (string-to-char (match-string 0)) '(?+ ?-))
+                   (+ amount (string-to-number (match-string 0)))))
+                 ;; Moves point one position back to conform with Vim
+                 (forward-char -1)
+                 t)))
            (error "No number at point or until end of line")))))))
 
 ;;;###autoload
