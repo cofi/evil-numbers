@@ -58,35 +58,35 @@
 
 ;;; Code:
 
-(defconst evil-superscript-alist
+(defconst evil-numbers/superscript-alist
   (cons
-   (cons ?⁻ ?-)
+   (cons ?- ?⁻)
    (cons
-    (cons ?⁺ ?+)
-    (mapcar (lambda (i) (cons (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)
-                              (string-to-char (number-to-string i))))
+    (cons ?+ ?⁺)
+    (mapcar (lambda (i) (cons 
+                         (string-to-char (number-to-string i))
+                         (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)))
             (number-sequence 0 9)))))
 
-(defun evil-number-to-superscript (number)
-  "Turn NUMBER like 29 into superscript like ²⁹.
-If argument is a string, uses `number-to-string' on it."
-  (let ((number (if (numberp number)
-                    (number-to-string number)
-                  number)))
-    (concat
-     (mapcar (lambda (digit)
-               (cdr (assoc digit (mapcar
-                                  (lambda (x) (cons (cdr x) (car x)))
-                                  evil-superscript-alist))))
-             number))))
+(defconst evil-numbers/subscript-alist
+  (cons
+   (cons ?- ?₋)
+   (cons
+    (cons ?+ ?₊)
+    (mapcar (lambda (i) (cons 
+                         (string-to-char (number-to-string i))
+                         (aref "₀₁₂₃₄₅₆₇₈₉" i)))
+            (number-sequence 0 9)))))
 
-(defun evil-superscript-to-number (string)
-  "Turn a superscript-number STRING like ²⁹ into a regular number like 29."
-  (string-to-number
-   (concat
-    (mapcar (lambda (c)
-              (cdr (assoc c evil-superscript-alist)))
-            string))))
+(defun evil-numbers/swap-alist (alist)
+  "Swap association list"
+  (mapcar (lambda (x) (cons (cdr x) (car x))) alist))
+
+(defun evil-numbers/translate-with-alist (alist string)
+  "Translate every symbol in string using alist"
+  (funcall
+   (if (stringp string) #'concat (lambda (x) x))
+   (mapcar (lambda (c) (cdr (assoc c alist))) string)))
 
 ;;;###autoload
 (evil-define-operator evil-numbers/inc-at-pt (amount beg end type &optional incremental)
@@ -115,7 +115,7 @@ INCREMENTAL causes the first number to be increased by 1*amount, the second by
              (lambda (f) (funcall f beg end)))
            (lambda (beg end)
              (evil-with-restriction beg end
-               (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|-?[0-9]+\\|⁻?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\)" nil t)
+               (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|[+-]?[0-9]+\\|[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\|[₋₊]?[₀₁₂₃₄₅₆₇₈₉]\\)" nil t)
                  ;; Backward char, to cancel out the forward-char below. We need
                  ;; this, as re-search-forwards puts us behind the match.
                  (backward-char)
@@ -128,51 +128,70 @@ INCREMENTAL causes the first number to be increased by 1*amount, the second by
         (forward-char)
         (if (not (evil-numbers/search-number))
             (error "No number at point or until end of line")
-          (or
-           ;; find binary literals
-           (evil-numbers/search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
+          (let ((pad
+                 (lambda (len sign arg)
+                   (format
+                    (format "%%%s0%dd" (if sign "+" "") len)
+                    arg)))
+                (replace-with
+                 (lambda (from to)
+                   (skip-chars-backward
+                    (funcall from "+-0123456789"))
+                   (when (looking-at
+                          (format
+                           "[%s]?[%s]+"
+                           (funcall from "-+")
+                           (funcall from "0123456789")))
+                     (replace-match
+                      (funcall
+                       from
+                       (funcall
+                        pad
+                        (- (match-end 0) (match-beginning 0))
+                        (memq (string-to-char (match-string 0))
+                              (funcall from '(?+ ?-)))
+                        (+ amount (string-to-number
+                                   (funcall to (match-string 0)))))))
+                     ;; Moves point one position back to conform with Vim
+                     (forward-char -1)
+                     t))))
+            (or
+             ;; find binary literals
+             (evil-numbers/search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
 
-           ;; find octal literals
-           (evil-numbers/search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
+             ;; find octal literals
+             (evil-numbers/search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
 
-           ;; find hex literals
-           (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
-                                            "0123456789abcdefABCDEF"
-                                            "\\([0-9a-fA-F]+\\)" amount 16)
+             ;; find hex literals
+             (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
+                                              "0123456789abcdefABCDEF"
+                                              "\\([0-9a-fA-F]+\\)" amount 16)
 
-           ;; find superscript literals
-           (let ((pad
-                  (lambda (len sign arg)
-                    (format
-                     (format "%%%s0%dd" (if sign "+" "") len)
-                     arg))))
-             (progn
-               (skip-chars-backward "⁺⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
-               (when (looking-at "\\(⁻\\|⁺\\)?[⁰¹²³⁴⁵⁶⁷⁸⁹]+")
-                 (replace-match
-                  (evil-number-to-superscript
-                   (funcall
-                    pad
-                    (- (match-end 0) (match-beginning 0))
-                    (memq (string-to-char (match-string 0)) '(?⁺ ?⁻))
-                    (+ amount (evil-superscript-to-number (match-string 0))))))
-                 ;; Moves point one position back to conform with Vim
-                 (forward-char -1)
-                 t))
-             ;; find decimal literals
-             (progn
-               (skip-chars-backward "+-0123456789")
-               (when (looking-at "\\(-\\|+\\)?[0-9]+")
-                 (replace-match
-                  (funcall
-                   pad
-                   (- (match-end 0) (match-beginning 0))
-                   (memq (string-to-char (match-string 0)) '(?+ ?-))
-                   (+ amount (string-to-number (match-string 0)))))
-                 ;; Moves point one position back to conform with Vim
-                 (forward-char -1)
-                 t)))
-           (error "No number at point or until end of line")))))))
+             ;; find superscript literals
+             (funcall
+              replace-with
+              (lambda (x)
+                (evil-numbers/translate-with-alist
+                 evil-numbers/superscript-alist x))
+              (lambda (x)
+                (evil-numbers/translate-with-alist
+                 (evil-numbers/swap-alist evil-numbers/superscript-alist)
+                 x)))
+
+             ;; find subscript literals
+             (funcall
+              replace-with
+              (lambda (x)
+                (evil-numbers/translate-with-alist
+                 evil-numbers/subscript-alist x))
+              (lambda (x)
+                (evil-numbers/translate-with-alist
+                 (evil-numbers/swap-alist evil-numbers/subscript-alist)
+                 x)))
+
+             ;; find normal decimal literals
+             (funcall replace-with (lambda (x) x) (lambda (x) x))
+             (error "No number at point or until end of line"))))))))
 
 ;;;###autoload
 (evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental)
@@ -219,6 +238,7 @@ decimal: [0-9]+, e.g. 42 or 23"
    ;; numbers or format specifier in front
    (looking-back (rx (or (+? digit)
                          (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
+                         (in "₀₁₂₃₄₅₆₇₈₉" )
                          (and "0" (or (and (in "bB") (*? (in "01")))
                                       (and (in "oO") (*? (in "0-7")))
                                       (and (in "xX") (*? (in digit "A-Fa-f"))))))))
@@ -226,7 +246,7 @@ decimal: [0-9]+, e.g. 42 or 23"
    ;; match 0 of specifier or digit, being in a literal and after specifier is
    ;; handled above
    (and
-	  (re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹]" (point-at-eol) t)
+	  (re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" (point-at-eol) t)
 	  (or
 	   (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
 	   (/= (char-before) ?0)
