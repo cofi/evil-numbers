@@ -1,14 +1,15 @@
 ;;; evil-numbers.el --- increment/decrement numbers like in vim
 
 ;; Copyright (C) 2011 by Michael Markert
+;;               2018 by Jan Path
 ;; Author: Michael Markert <markert.michael@googlemail.com>
-;; Contributors:
-;;               Matthew Fidler <matthew.fidler@gmail.com>
+;; Contributors: Matthew Fidler <matthew.fidler@gmail.com>
 ;;               Michael Markert <markert.michael@gmail.com>
-;; URL: http://github.com/cofi/evil-numbers
-;; Git-Repository: git://github.com/cofi/evil-numbers.git
+;;               Jan Path <jan@jpath.de>
+;; URL: http://github.com/janpath/evil-numbers
+;; Git-Repository: git://github.com/janpath/evil-numbers.git
 ;; Created: 2011-09-02
-;; Version: 0.4
+;; Version: 0.5
 ;; Keywords: numbers increment decrement octal hex binary
 
 ;; This file is not part of GNU Emacs.
@@ -34,7 +35,7 @@
 ;; increments or decrements and keep zero padding up
 
 ;; Known Bugs:
-;; See http://github.com/cofi/evil-numbers/issues
+;; See http://github.com/janpath/evil-numbers/issues
 
 ;; Install:
 
@@ -44,14 +45,20 @@
 
 ;; (global-set-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
 ;; (global-set-key (kbd "C-c -") 'evil-numbers/dec-at-pt)
+;; (global-set-key (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+;; (global-set-key (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
 
 ;; or only in evil's normal and visual state:
 
 ;; (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
 ;; (define-key evil-visual-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
+;; (define-key evil-normal-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+;; (define-key evil-visual-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
 ;;
 ;; (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
 ;; (define-key evil-visual-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
+;; (define-key evil-normal-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
+;; (define-key evil-visual-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
 
 ;; Usage:
 ;; Go and play with your numbers!
@@ -107,7 +114,10 @@ INCREMENTAL causes the first number to be increased by 1*amount, the second by
 
 PADDED is whether numbers should be padded (e.g. 10 -> 09). nil is default
 behaviour set by `evil-numbers/pad-default', t is the opposite of
-`evil-numbers/pad-default','(t) enables padding and '(nil) disables padding.
+`evil-numbers/pad-default', '(t) enables padding and '(nil) disables padding.
+Numbers with a leading zero are always padded. Signs are preserved when padding
+is enabled, i.e. increasing a negative number to a positive will result in a
+number with a + sign.
 
 "
   :motion nil
