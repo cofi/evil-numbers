@@ -1,0 +1,10 @@
+0.5
+	- Add support for block selections
+  - Add support for subscript and superscript numbers
+  - Make padding optinal
+  - Fix numbers being pushed out of selections (e.g. calling inc-at-pt on ^9 9$
+    where ^$ denote the start and end of the selection would result in 10 9).
+  - Pad negative numbers and add a plus sign if a negative number is turned into
+    a positive number (if padding is enabled)
+  - Add g C-a like functionality (i.e. increment first number in selection by 1,
+    second one by 2 and so on)
