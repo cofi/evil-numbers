@@ -283,7 +283,7 @@ decimal: [0-9]+, e.g. 42 or 23"
     (skip-chars-backward skip-back)
     (search-forward-regexp search-forward)
     (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
-                                        (length (match-string 1))
+                                        (if evil-numbers/padDefault (length (match-string 1)) 1)
                                         base))
 	  ;; Moves point one position back to conform with Vim
 	  (forward-char -1)
