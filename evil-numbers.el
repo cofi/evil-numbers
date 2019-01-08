@@ -102,15 +102,15 @@
 
 ;;;###autoload
 (evil-define-operator evil-numbers/inc-at-pt (amount beg end type &optional incremental padded)
-  "Increment the number at point or after point before end-of-line by `amount'.
-When region is selected, increment all numbers in the region by `amount'
+  "Increment the number at point or after point before end-of-line by AMOUNT.
+When region is selected, increment all numbers in the region by AMOUNT
 
 NO-REGION is internal flag that allows
 `evil-numbers/inc-at-point' to be called recursively when
 applying the regional features of `evil-numbers/inc-at-point'.
 
-INCREMENTAL causes the first number to be increased by 1*amount, the second by
-2*amount and so on.
+INCREMENTAL causes the first number to be increased by 1*AMOUNT, the second by
+2*AMOUNT and so on.
 
 PADDED is whether numbers should be padded (e.g. 10 -> 09). nil is default
 behaviour set by `evil-numbers/pad-default', t is the opposite of
@@ -227,9 +227,9 @@ number with a + sign.
 
 ;;;###autoload
 (evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental padded)
-  "Decrement the number at point or after point before end-of-line by `amount'.
+  "Decrement the number at point or after point before end-of-line by AMOUNT.
 
-If a region is active, decrement all the numbers at a point by `amount'.
+If a region is active, decrement all the numbers at a point by AMOUNT.
 
 This function uses `evil-numbers/inc-at-pt'"
   :motion nil
@@ -238,11 +238,11 @@ This function uses `evil-numbers/inc-at-pt'"
 
 ;;;###autoload
 (evil-define-operator evil-numbers/inc-at-pt-incremental (amount beg end type padded)
-  "Increment the number at point or after point before end-of-line by `amount'.
+  "Increment the number at point or after point before end-of-line by AMOUNT.
 
-If a region is active, increment all the numbers at a point by `amount'*n, where
-`n' is the index of the number among the numbers in the region, starting at 1.
-That is increment the first number by `amount', the second by 2*`amount', and so
+If a region is active, increment all the numbers at a point by AMOUNT*n, where
+n is the index of the number among the numbers in the region, starting at 1.
+That is increment the first number by AMOUNT, the second by 2*AMOUNT, and so
 on."
   :motion nil
   (interactive "*<c><R>")
@@ -250,7 +250,7 @@ on."
 
 ;;;###autoload
 (evil-define-operator evil-numbers/dec-at-pt-incremental (amount beg end type padded)
-  "Like `evil-numbers/inc-at-pt-incremental' but with negated argument `amount'"
+  "Like `evil-numbers/inc-at-pt-incremental' but with negated argument AMOUNT"
   :motion nil
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incemental padded))
@@ -288,7 +288,7 @@ decimal: [0-9]+, e.g. 42 or 23"
 	   (<= 0 (skip-chars-forward "bBoOxX"))))))
 
 (defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
-  "When looking back at `LOOK-BACK' skip chars `SKIP-BACK'backwards and replace number incremented by `INC' in `BASE' and return non-nil."
+  "When looking back at LOOK-BACK skip chars SKIP-BACK backwards and replace number incremented by INC in BASE and return non-nil."
   (when (looking-back look-back)
     (skip-chars-backward skip-back)
     (search-forward-regexp search-forward)
@@ -300,7 +300,7 @@ decimal: [0-9]+, e.g. 42 or 23"
     t))
 
 (defun evil-numbers/format (num width base)
-  "Format `NUM' with at least `WIDTH' space in `BASE'"
+  "Format NUM with at least WIDTH space in BASE"
   (cond
    ((= base 2) (evil-numbers/format-binary num width))
    ((= base 8) (format (format "%%0%do" width) num))
@@ -308,9 +308,9 @@ decimal: [0-9]+, e.g. 42 or 23"
    (t "")))
 
 (defun evil-numbers/format-binary (number &optional width fillchar)
-  "Format `NUMBER' as binary.
-Fill up to `WIDTH' with `FILLCHAR' (defaults to ?0) if binary
-representation of `NUMBER' is smaller."
+  "Format NUMBER as binary.
+Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
+representation of NUMBER is smaller."
   (let (nums
         (fillchar (or fillchar ?0)))
     (while (> number 0)
