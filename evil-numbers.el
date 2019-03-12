@@ -87,6 +87,7 @@
                          (aref "₀₁₂₃₄₅₆₇₈₉" i)))
             (number-sequence 0 9)))))
 
+;;;###autoload
 (defcustom evil-numbers/padDefault nil
   "Whether numbers are padded by default"
   :type 'boolean
@@ -102,7 +103,7 @@
    (if (stringp string) #'concat (lambda (x) x))
    (mapcar (lambda (c) (cdr (assoc c alist))) string)))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers")
 (evil-define-operator evil-numbers/inc-at-pt (amount beg end type &optional incremental padded)
   "Increment the number at point or after point before end-of-line by AMOUNT.
 When region is selected, increment all numbers in the region by AMOUNT
@@ -227,7 +228,7 @@ number with a + sign.
                (funcall replace-with (lambda (x) x) (lambda (x) x))
                (error "No number at point or until end of line")))))))))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers")
 (evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental padded)
   "Decrement the number at point or after point before end-of-line by AMOUNT.
 
@@ -238,7 +239,7 @@ This function uses `evil-numbers/inc-at-pt'"
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type incremental padded))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-numbers/inc-at-pt-incremental "evil-numbers")
 (evil-define-operator evil-numbers/inc-at-pt-incremental (amount beg end type padded)
   "Increment the number at point or after point before end-of-line by AMOUNT.
 
@@ -250,7 +251,7 @@ on."
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt amount beg end type 'incremental padded))
 
-;;;###autoload
+;;;###autoload (autoload 'evil-numbers/dec-at-pt-incremental "evil-numbers")
 (evil-define-operator evil-numbers/dec-at-pt-incremental (amount beg end type padded)
   "Like `evil-numbers/inc-at-pt-incremental' but with negated argument AMOUNT"
   :motion nil
