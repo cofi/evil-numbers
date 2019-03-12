@@ -87,9 +87,14 @@
                          (aref "₀₁₂₃₄₅₆₇₈₉" i)))
             (number-sequence 0 9)))))
 
+(defgroup evil-numbers nil
+  ""
+  :group 'convenience)
+
 ;;;###autoload
 (defcustom evil-numbers/padDefault nil
   "Whether numbers are padded by default"
+  :group 'evil-numbers
   :type 'boolean
   :options '(nil t))
 
