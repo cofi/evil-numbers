@@ -3,6 +3,7 @@
 ;; Copyright (C) 2011 by Michael Markert
 ;;               2018 by Jan Path
 ;; Author: Michael Markert <markert.michael@googlemail.com>
+;; Maintainer: Jan Path <jan@jpath.de>
 ;; Contributors: Matthew Fidler <matthew.fidler@gmail.com>
 ;;               Michael Markert <markert.michael@gmail.com>
 ;;               Jan Path <jan@jpath.de>
