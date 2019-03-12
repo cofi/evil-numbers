@@ -65,6 +65,8 @@
 
 ;;; Code:
 
+(require 'evil)
+
 (defconst evil-numbers/superscript-alist
   (cons
    (cons ?- ?⁻)
