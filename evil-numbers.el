@@ -168,7 +168,9 @@ number with a + sign.
                   (replace-with
                    (lambda (from to)
                      (skip-chars-backward
-                      (funcall from "+-0123456789"))
+                      (funcall from "0123456789"))
+                     (skip-chars-backward
+                      (funcall from "+-") (- (point) 1))
                      (when (looking-at
                             (format
                              "[%s]?\\([%s]+\\)"
