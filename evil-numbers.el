@@ -283,7 +283,8 @@ decimal: [0-9]+, e.g. 42 or 23"
                          (in "₀₁₂₃₄₅₆₇₈₉" )
                          (and "0" (or (and (in "bB") (*? (in "01")))
                                       (and (in "oO") (*? (in "0-7")))
-                                      (and (in "xX") (*? (in digit "A-Fa-f"))))))))
+                                      (and (in "xX") (*? (in digit "A-Fa-f")))))))
+                 (point-at-bol))
    ;; search for number in rest of line
    ;; match 0 of specifier or digit, being in a literal and after specifier is
    ;; handled above
@@ -303,7 +304,7 @@ decimal: [0-9]+, e.g. 42 or 23"
 When looking back at LOOK-BACK skip chars SKIP-BACK backwards,
 then SEARCH-FORWARD and replace number incremented by INC in BASE
 and return non-nil."
-  (when (looking-back look-back)
+  (when (looking-back look-back (point-at-bol))
     (skip-chars-backward skip-back)
     (search-forward-regexp search-forward)
     (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
