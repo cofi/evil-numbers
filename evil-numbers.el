@@ -1,4 +1,4 @@
-;;; evil-numbers.el --- increment/decrement numbers like in vim
+;;; evil-numbers.el --- increment/decrement numbers like in vim -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2011 by Michael Markert
 ;;               2018 by Jan Path
@@ -158,12 +158,7 @@ number with a + sign."
           (forward-char)
           (if (not (evil-numbers/search-number))
               (error "No number at point or until end of line")
-            (let ((pad
-                   (lambda (len sign arg)
-                     (format
-                      (format "%%%s0%dd" (if sign "+" "") len)
-                      arg)))
-                  (replace-with
+            (let ((replace-with
                    (lambda (from to)
                      (skip-chars-backward
                       (funcall from "0123456789"))
