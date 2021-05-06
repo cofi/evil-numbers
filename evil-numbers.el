@@ -89,29 +89,29 @@
             (number-sequence 0 9)))))
 
 (defgroup evil-numbers nil
-  ""
+  "Support number increment/decrement."
   :group 'convenience)
 
 ;;;###autoload
 (defcustom evil-numbers/padDefault nil
-  "Whether numbers are padded by default"
+  "Whether numbers are padded by default."
   :group 'evil-numbers
   :type 'boolean
   :options '(nil t))
 
 (defun evil-numbers/swap-alist (alist)
-  "Swap association list"
+  "Swap association list ALIST."
   (mapcar (lambda (x) (cons (cdr x) (car x))) alist))
 
 (defun evil-numbers/translate-with-alist (alist string)
-  "Translate every symbol in string using alist"
+  "Translate every symbol in STRING using ALIST."
   (funcall
    (if (stringp string) #'concat (lambda (x) x))
    (mapcar (lambda (c) (cdr (assoc c alist))) string)))
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt (amount beg end type &optional incremental padded)
-  "Increment the number at point or after point before end-of-line by AMOUNT.
+  "Increment the number at point or after point before `end-of-line' by AMOUNT.
 When region is selected, increment all numbers in the region by AMOUNT
 
 NO-REGION is internal flag that allows
@@ -126,9 +126,7 @@ behaviour set by `evil-numbers/pad-default', t is the opposite of
 `evil-numbers/pad-default', '(t) enables padding and '(nil) disables padding.
 Numbers with a leading zero are always padded. Signs are preserved when padding
 is enabled, i.e. increasing a negative number to a positive will result in a
-number with a + sign.
-
-"
+number with a + sign."
   :motion nil
   (interactive "*<c><R>")
   (let ((amount (or amount 1))
@@ -238,7 +236,7 @@ number with a + sign.
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental padded)
-  "Decrement the number at point or after point before end-of-line by AMOUNT.
+  "Decrement the number at point or after point before `end-of-line' by AMOUNT.
 
 If a region is active, decrement all the numbers at a point by AMOUNT.
 
@@ -249,7 +247,7 @@ This function uses `evil-numbers/inc-at-pt'"
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt-incremental "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt-incremental (amount beg end type padded)
-  "Increment the number at point or after point before end-of-line by AMOUNT.
+  "Increment the number at point or after point before `end-of-line' by AMOUNT.
 
 If a region is active, increment all the numbers at a point by AMOUNT*n, where
 n is the index of the number among the numbers in the region, starting at 1.
@@ -261,7 +259,7 @@ on."
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt-incremental "evil-numbers" nil t)
 (evil-define-operator evil-numbers/dec-at-pt-incremental (amount beg end type padded)
-  "Like `evil-numbers/inc-at-pt-incremental' but with negated argument AMOUNT"
+  "Like `evil-numbers/inc-at-pt-incremental' but with negated argument AMOUNT."
   :motion nil
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incemental padded))
@@ -269,10 +267,11 @@ on."
 ;;; utils
 
 (defun evil-numbers/search-number ()
-  "Return non-nil if a binary, octal, hexadecimal or decimal literal at or after point.
+  "Return non-nil if a number literal at or after point.
+
 If point is already within or after a literal it stays.
 
-The literals have to be in the following forms:
+Literals may be in binary, octal, hexadecimal or decimal forms:
 binary: 0[bB][01]+, e.g. 0b101 or 0B0
 octal: 0[oO][0-7]+, e.g. 0o42 or 0O5
 hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
@@ -299,7 +298,11 @@ decimal: [0-9]+, e.g. 42 or 23"
 	   (<= 0 (skip-chars-forward "bBoOxX"))))))
 
 (defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
-  "When looking back at LOOK-BACK skip chars SKIP-BACK backwards and replace number incremented by INC in BASE and return non-nil."
+  "Perform the increment/decrement on the current line.
+
+When looking back at LOOK-BACK skip chars SKIP-BACK backwards,
+then SEARCH-FORWARD and replace number incremented by INC in BASE
+and return non-nil."
   (when (looking-back look-back)
     (skip-chars-backward skip-back)
     (search-forward-regexp search-forward)
@@ -311,7 +314,7 @@ decimal: [0-9]+, e.g. 42 or 23"
     t))
 
 (defun evil-numbers/format (num width base)
-  "Format NUM with at least WIDTH space in BASE"
+  "Format NUM with at least WIDTH space in BASE."
   (cond
    ((= base 2) (evil-numbers/format-binary num width))
    ((= base 8) (format (format "%%0%do" width) num))
