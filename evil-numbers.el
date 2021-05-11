@@ -1,14 +1,14 @@
 ;;; evil-numbers.el --- increment/decrement numbers like in vim -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2011 by Michael Markert
-;;               2018 by Jan Path
+;;               2020 by Julia Path
 ;; Author: Michael Markert <markert.michael@googlemail.com>
-;; Maintainer: Jan Path <jan@jpath.de>
+;; Maintainer: Julia Path <julia@jpath.de>
 ;; Contributors: Matthew Fidler <matthew.fidler@gmail.com>
 ;;               Michael Markert <markert.michael@gmail.com>
-;;               Jan Path <jan@jpath.de>
-;; URL: http://github.com/janpath/evil-numbers
-;; Git-Repository: git://github.com/janpath/evil-numbers.git
+;;               Julia Path <julia@jpath.de>
+;; URL: http://github.com/juliapath/evil-numbers
+;; Git-Repository: git://github.com/juliapath/evil-numbers.git
 ;; Created: 2011-09-02
 ;; Version: 0.5
 ;; Keywords: numbers increment decrement octal hex binary
@@ -36,7 +36,7 @@
 ;; increments or decrements and keep zero padding up
 
 ;; Known Bugs:
-;; See http://github.com/janpath/evil-numbers/issues
+;; See http://github.com/juliapath/evil-numbers/issues
 
 ;; Install:
 
