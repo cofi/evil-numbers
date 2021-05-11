@@ -55,9 +55,9 @@
    Position cursor on literal and play with your numbers!
 
 ** Known Bugs
-   See http://github.com/janpath/evil-numbers/issues
+   See http://github.com/juliapath/evil-numbers/issues
 
 ** Contributors
    - Matthew Fidler <matthew.fidler@gmail.com>
    - Michael Markert <markert.michael@gmail.com>
-   - Jan Path <jan@jpath.de>
+   - Julia Path <julia@jpath.de>
