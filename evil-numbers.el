@@ -30,10 +30,10 @@
 
 ;;; Commentary:
 
-;; Increment / Decrement binary, octal, decimal and hex literals
+;; Increment / Decrement binary, octal, decimal and hex literals.
 
-;; works like C-a/C-x in vim, i.e. searches for number up to eol and then
-;; increments or decrements and keep zero padding up
+;; Works like C-a/C-x in vim, i.e. searches for number up to EOL and
+;; then increments or decrements and keep zero padding up.
 
 ;; Known Bugs:
 ;; See http://github.com/juliapath/evil-numbers/issues
@@ -147,11 +147,11 @@ number with a + sign."
                (evil-with-restriction beg end
                  (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|[+-]?[0-9]+\\|[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\|[₋₊]?[₀₁₂₃₄₅₆₇₈₉]\\)" nil t)
                    ;; Backward char, to cancel out the forward-char below. We need
-                   ;; this, as re-search-forwards puts us behind the match.
+                   ;; this, as `re-search-forwards' puts us behind the match.
                    (backward-char)
                    (evil-numbers/inc-at-pt (* amount count) nil nil nil)
                    (if incremental (setq count (+ count 1)))
-                   ;; Undo vim compatability.
+                   ;; Undo VIM compatibility.
                    (forward-char 1)))))))))
      (t (save-match-data
           ;; forward-char, so that we do not match the number directly behind us.
@@ -188,22 +188,22 @@ number with a + sign."
                                     (if signed "+" "")
                                     (if padded len 0))
                             output))))
-                       ;; Moves point one position back to conform with Vim
+                       ;; Moves point one position back to conform with VIM
                        (forward-char -1)
                        t))))
               (or
-               ;; find binary literals
+               ;; Find binary literals.
                (evil-numbers/search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
 
-               ;; find octal literals
+               ;; Find octal literals.
                (evil-numbers/search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
 
-               ;; find hex literals
+               ;; Find hex literals.
                (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
                                                 "0123456789abcdefABCDEF"
                                                 "\\([0-9a-fA-F]+\\)" amount 16)
 
-               ;; find superscript literals
+               ;; Find superscript literals.
                (funcall
                 replace-with
                 (lambda (x)
@@ -214,7 +214,7 @@ number with a + sign."
                    (evil-numbers/swap-alist evil-numbers/superscript-alist)
                    x)))
 
-               ;; find subscript literals
+               ;; Find subscript literals.
                (funcall
                 replace-with
                 (lambda (x)
@@ -225,7 +225,7 @@ number with a + sign."
                    (evil-numbers/swap-alist evil-numbers/subscript-alist)
                    x)))
 
-               ;; find normal decimal literals
+               ;; Find normal decimal literals.
                (funcall replace-with (lambda (x) x) (lambda (x) x))
                (error "No number at point or until end of line")))))))))
 
@@ -259,7 +259,7 @@ on."
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incemental padded))
 
-;;; utils
+;;; Utilities.
 
 (defun evil-numbers/search-number ()
   "Return non-nil if a number literal at or after point.
@@ -272,7 +272,7 @@ octal: 0[oO][0-7]+, e.g. 0o42 or 0O5
 hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
 decimal: [0-9]+, e.g. 42 or 23"
   (or
-   ;; numbers or format specifier in front
+   ;; Numbers or format specifier in front.
    (looking-back (rx (or (+? digit)
                          (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
                          (in "₀₁₂₃₄₅₆₇₈₉" )
@@ -280,17 +280,16 @@ decimal: [0-9]+, e.g. 42 or 23"
                                       (and (in "oO") (*? (in "0-7")))
                                       (and (in "xX") (*? (in digit "A-Fa-f")))))))
                  (point-at-bol))
-   ;; search for number in rest of line
-   ;; match 0 of specifier or digit, being in a literal and after specifier is
-   ;; handled above
+   ;; Search for number in rest of line match 0 of specifier or digit,
+   ;; being in a literal and after specifier is handled above.
    (and
 	  (re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" (point-at-eol) t)
 	  (or
 	   (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
 	   (/= (char-before) ?0)
-	   (and (> (point) 2)				; Should also take bofp into consideration
+	   (and (> (point) 2)				; Should also take bofp into consideration.
 		      (not (looking-back "\\W0" 2)))
-	   ;; skip format specifiers and interpret as bool
+	   ;; Skip format specifiers and interpret as boolean.
 	   (<= 0 (skip-chars-forward "bBoOxX"))))))
 
 (defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
@@ -305,7 +304,7 @@ and return non-nil."
     (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
                                         (if evil-numbers/padDefault (length (match-string 1)) 1)
                                         base))
-	  ;; Moves point one position back to conform with Vim
+	  ;; Moves point one position back to conform with VIM.
 	  (forward-char -1)
     t))
 
