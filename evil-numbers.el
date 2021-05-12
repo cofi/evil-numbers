@@ -283,14 +283,14 @@ decimal: [0-9]+, e.g. 42 or 23"
    ;; Search for number in rest of line match 0 of specifier or digit,
    ;; being in a literal and after specifier is handled above.
    (and
-	  (re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" (point-at-eol) t)
-	  (or
-	   (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
-	   (/= (char-before) ?0)
-	   (and (> (point) 2)				; Should also take bofp into consideration.
-		      (not (looking-back "\\W0" 2)))
-	   ;; Skip format specifiers and interpret as boolean.
-	   (<= 0 (skip-chars-forward "bBoOxX"))))))
+    (re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" (point-at-eol) t)
+    (or
+     (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
+     (/= (char-before) ?0)
+     (and (> (point) 2) ;; Should also take bofp into consideration.
+          (not (looking-back "\\W0" 2)))
+     ;; Skip format specifiers and interpret as boolean.
+     (<= 0 (skip-chars-forward "bBoOxX"))))))
 
 (defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
   "Perform the increment/decrement on the current line.
@@ -304,8 +304,8 @@ and return non-nil."
     (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
                                         (if evil-numbers/padDefault (length (match-string 1)) 1)
                                         base))
-	  ;; Moves point one position back to conform with VIM.
-	  (forward-char -1)
+    ;; Moves point one position back to conform with VIM.
+    (forward-char -1)
     t))
 
 (defun evil-numbers/format (num width base)
