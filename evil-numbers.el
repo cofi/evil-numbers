@@ -69,7 +69,7 @@
 
 (require 'evil)
 
-(defconst evil-numbers/superscript-alist
+(defconst evil-numbers--superscript-alist
   (cons
    (cons ?- ?⁻)
    (cons
@@ -79,7 +79,7 @@
                          (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)))
             (number-sequence 0 9)))))
 
-(defconst evil-numbers/subscript-alist
+(defconst evil-numbers--subscript-alist
   (cons
    (cons ?- ?₋)
    (cons
@@ -100,11 +100,11 @@
   :type 'boolean
   :options '(nil t))
 
-(defun evil-numbers/swap-alist (alist)
+(defun evil-numbers--swap-alist (alist)
   "Swap association list ALIST."
   (mapcar (lambda (x) (cons (cdr x) (car x))) alist))
 
-(defun evil-numbers/translate-with-alist (alist string)
+(defun evil-numbers--translate-with-alist (alist string)
   "Translate every symbol in STRING using ALIST."
   (funcall
    (if (stringp string) #'concat (lambda (x) x))
@@ -158,7 +158,7 @@ number with a + sign."
       (save-match-data
         ;; forward-char, so that we do not match the number directly behind us.
         (forward-char)
-        (if (not (evil-numbers/search-number))
+        (if (not (evil-numbers--search-number))
             (error "No number at point or until end of line")
           (let ((replace-with
                  (lambda (from to)
@@ -195,13 +195,13 @@ number with a + sign."
                      t))))
             (or
              ;; Find binary literals.
-             (evil-numbers/search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
+             (evil-numbers--search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
 
              ;; Find octal literals.
-             (evil-numbers/search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
+             (evil-numbers--search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
 
              ;; Find hex literals.
-             (evil-numbers/search-and-replace "0[xX][0-9a-fA-F]*"
+             (evil-numbers--search-and-replace "0[xX][0-9a-fA-F]*"
                                               "0123456789abcdefABCDEF"
                                               "\\([0-9a-fA-F]+\\)" amount 16)
 
@@ -209,22 +209,22 @@ number with a + sign."
              (funcall
               replace-with
               (lambda (x)
-                (evil-numbers/translate-with-alist
-                 evil-numbers/superscript-alist x))
+                (evil-numbers--translate-with-alist
+                 evil-numbers--superscript-alist x))
               (lambda (x)
-                (evil-numbers/translate-with-alist
-                 (evil-numbers/swap-alist evil-numbers/superscript-alist)
+                (evil-numbers--translate-with-alist
+                 (evil-numbers--swap-alist evil-numbers--superscript-alist)
                  x)))
 
              ;; Find subscript literals.
              (funcall
               replace-with
               (lambda (x)
-                (evil-numbers/translate-with-alist
-                 evil-numbers/subscript-alist x))
+                (evil-numbers--translate-with-alist
+                 evil-numbers--subscript-alist x))
               (lambda (x)
-                (evil-numbers/translate-with-alist
-                 (evil-numbers/swap-alist evil-numbers/subscript-alist)
+                (evil-numbers--translate-with-alist
+                 (evil-numbers--swap-alist evil-numbers--subscript-alist)
                  x)))
 
              ;; Find normal decimal literals.
@@ -263,7 +263,7 @@ on."
 
 ;;; Utilities.
 
-(defun evil-numbers/search-number ()
+(defun evil-numbers--search-number ()
   "Return non-nil if a number literal at or after point.
 
 If point is already within or after a literal it stays.
@@ -294,7 +294,7 @@ decimal: [0-9]+, e.g. 42 or 23"
      ;; Skip format specifiers and interpret as boolean.
      (<= 0 (skip-chars-forward "bBoOxX"))))))
 
-(defun evil-numbers/search-and-replace (look-back skip-back search-forward inc base)
+(defun evil-numbers--search-and-replace (look-back skip-back search-forward inc base)
   "Perform the increment/decrement on the current line.
 
 When looking back at LOOK-BACK skip chars SKIP-BACK backwards,
@@ -303,22 +303,22 @@ and return non-nil."
   (when (looking-back look-back (point-at-bol))
     (skip-chars-backward skip-back)
     (search-forward-regexp search-forward)
-    (replace-match (evil-numbers/format (+ inc (string-to-number (match-string 1) base))
+    (replace-match (evil-numbers--format (+ inc (string-to-number (match-string 1) base))
                                         (if evil-numbers/padDefault (length (match-string 1)) 1)
                                         base))
     ;; Moves point one position back to conform with VIM.
     (forward-char -1)
     t))
 
-(defun evil-numbers/format (num width base)
+(defun evil-numbers--format (num width base)
   "Format NUM with at least WIDTH space in BASE."
   (cond
-   ((= base 2) (evil-numbers/format-binary num width))
+   ((= base 2) (evil-numbers-format-binary num width))
    ((= base 8) (format (format "%%0%do" width) num))
    ((= base 16) (format (format "%%0%dX" width) num))
    (t "")))
 
-(defun evil-numbers/format-binary (number &optional width fillchar)
+(defun evil-numbers-format-binary (number &optional width fillchar)
   "Format NUMBER as binary.
 Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
 representation of NUMBER is smaller."
