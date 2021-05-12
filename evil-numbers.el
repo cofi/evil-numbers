@@ -1,4 +1,4 @@
-;;; evil-numbers.el --- increment/decrement numbers like in vim -*- lexical-binding: t -*-
+;;; evil-numbers.el --- Increment/decrement numbers like in VIM -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2011 by Michael Markert
 ;;               2020 by Julia Path
@@ -11,7 +11,8 @@
 ;; Git-Repository: git://github.com/juliapath/evil-numbers.git
 ;; Created: 2011-09-02
 ;; Version: 0.5
-;; Keywords: numbers increment decrement octal hex binary
+;; Package-Requires: ((emacs "24.1"))
+;; Keywords: convenience tools
 
 ;; This file is not part of GNU Emacs.
 
