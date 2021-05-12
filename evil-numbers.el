@@ -259,7 +259,7 @@ on."
   "Like `evil-numbers/inc-at-pt-incremental' but with negated argument AMOUNT."
   :motion nil
   (interactive "*<c><R>")
-  (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incemental padded))
+  (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incremental padded))
 
 ;;; Utilities.
 
