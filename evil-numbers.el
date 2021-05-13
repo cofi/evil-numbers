@@ -130,106 +130,107 @@ is enabled, i.e. increasing a negative number to a positive will result in a
 number with a + sign."
   :motion nil
   (interactive "*<c><R>")
-  (let ((amount (or amount 1))
-        (padded (if (consp padded) (car padded)
-                  (funcall
-                   (if padded #'not (lambda (x) x))
-                   evil-numbers/padDefault))))
-    (cond
-     ((and beg end type)
-      (let ((count 1))
-        (save-excursion
-          (save-match-data
-            (funcall
-             (if (eq type 'block)
-                 (lambda (f) (evil-apply-on-block f beg end nil))
-               (lambda (f) (funcall f beg end)))
-             (lambda (beg end)
-               (evil-with-restriction beg end
-                 (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|[+-]?[0-9]+\\|[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\|[₋₊]?[₀₁₂₃₄₅₆₇₈₉]\\)" nil t)
-                   ;; Backward char, to cancel out the forward-char below. We need
-                   ;; this, as `re-search-forwards' puts us behind the match.
-                   (backward-char)
-                   (evil-numbers/inc-at-pt (* amount count) nil nil nil)
-                   (if incremental (setq count (+ count 1)))
-                   ;; Undo VIM compatibility.
-                   (forward-char 1)))))))))
-     (t
-      (save-match-data
-        ;; forward-char, so that we do not match the number directly behind us.
-        (forward-char)
-        (if (not (evil-numbers--search-number))
-            (error "No number at point or until end of line")
-          (let ((replace-with
-                 (lambda (from to)
-                   (skip-chars-backward
-                    (funcall from "0123456789"))
-                   (skip-chars-backward
-                    (funcall from "+-") (- (point) 1))
-                   (when (looking-at
-                          (format
-                           "[%s]?\\([%s]+\\)"
-                           (funcall from "-+")
-                           (funcall from "0123456789")))
-                     (replace-match
-                      (funcall
-                       from
-                       (let* ((padded
-                               (or padded
-                                   (eq ?0 (string-to-char (match-string 1)))))
-                              (input (string-to-number
-                                      (funcall to (match-string 0))))
-                              (output (+ amount input))
-                              (len (- (match-end 0) (match-beginning 0)))
-                              (signed (and
-                                       (memq (string-to-char (match-string 0))
-                                             (funcall from '(?+ ?-)))
-                                       (or padded (>= input 0)))))
-                         (format
-                          (format "%%%s0%dd"
-                                  (if signed "+" "")
-                                  (if padded len 0))
-                          output))))
-                     ;; Moves point one position back to conform with VIM
-                     (forward-char -1)
-                     t))))
-            (or
-             ;; Find binary literals.
-             (evil-numbers--search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
 
-             ;; Find octal literals.
-             (evil-numbers--search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
+  (setq amount (or amount 1))
+  (setq padded (if (consp padded)
+                   (car padded)
+                 (funcall (if padded #'not (lambda (x) x))
+                          evil-numbers/padDefault)))
+  (cond
+   ((and beg end type)
+    (let ((count 1))
+      (save-excursion
+        (save-match-data
+          (funcall
+           (if (eq type 'block)
+               (lambda (f) (evil-apply-on-block f beg end nil))
+             (lambda (f) (funcall f beg end)))
+           (lambda (beg end)
+             (evil-with-restriction beg end
+               (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|[+-]?[0-9]+\\|[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\|[₋₊]?[₀₁₂₃₄₅₆₇₈₉]\\)" nil t)
+                 ;; Backward char, to cancel out the forward-char below. We need
+                 ;; this, as `re-search-forwards' puts us behind the match.
+                 (backward-char)
+                 (evil-numbers/inc-at-pt (* amount count) nil nil nil)
+                 (if incremental (setq count (+ count 1)))
+                 ;; Undo VIM compatibility.
+                 (forward-char 1)))))))))
+   (t
+    (save-match-data
+      ;; forward-char, so that we do not match the number directly behind us.
+      (forward-char)
+      (if (not (evil-numbers--search-number))
+          (error "No number at point or until end of line")
+        (let ((replace-with
+               (lambda (from to)
+                 (skip-chars-backward
+                  (funcall from "0123456789"))
+                 (skip-chars-backward
+                  (funcall from "+-") (- (point) 1))
+                 (when (looking-at
+                        (format
+                         "[%s]?\\([%s]+\\)"
+                         (funcall from "-+")
+                         (funcall from "0123456789")))
+                   (replace-match
+                    (funcall
+                     from
+                     (let* ((padded
+                             (or padded
+                                 (eq ?0 (string-to-char (match-string 1)))))
+                            (input (string-to-number
+                                    (funcall to (match-string 0))))
+                            (output (+ amount input))
+                            (len (- (match-end 0) (match-beginning 0)))
+                            (signed (and
+                                     (memq (string-to-char (match-string 0))
+                                           (funcall from '(?+ ?-)))
+                                     (or padded (>= input 0)))))
+                       (format
+                        (format "%%%s0%dd"
+                                (if signed "+" "")
+                                (if padded len 0))
+                        output))))
+                   ;; Moves point one position back to conform with VIM
+                   (forward-char -1)
+                   t))))
+          (or
+           ;; Find binary literals.
+           (evil-numbers--search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
 
-             ;; Find hex literals.
-             (evil-numbers--search-and-replace "0[xX][0-9a-fA-F]*"
-                                              "0123456789abcdefABCDEF"
-                                              "\\([0-9a-fA-F]+\\)" amount 16)
+           ;; Find octal literals.
+           (evil-numbers--search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
 
-             ;; Find superscript literals.
-             (funcall
-              replace-with
-              (lambda (x)
-                (evil-numbers--translate-with-alist
-                 evil-numbers--superscript-alist x))
-              (lambda (x)
-                (evil-numbers--translate-with-alist
-                 (evil-numbers--swap-alist evil-numbers--superscript-alist)
-                 x)))
+           ;; Find hex literals.
+           (evil-numbers--search-and-replace "0[xX][0-9a-fA-F]*"
+                                             "0123456789abcdefABCDEF"
+                                             "\\([0-9a-fA-F]+\\)" amount 16)
 
-             ;; Find subscript literals.
-             (funcall
-              replace-with
-              (lambda (x)
-                (evil-numbers--translate-with-alist
-                 evil-numbers--subscript-alist x))
-              (lambda (x)
-                (evil-numbers--translate-with-alist
-                 (evil-numbers--swap-alist evil-numbers--subscript-alist)
-                 x)))
+           ;; Find superscript literals.
+           (funcall
+            replace-with
+            (lambda (x)
+              (evil-numbers--translate-with-alist
+               evil-numbers--superscript-alist x))
+            (lambda (x)
+              (evil-numbers--translate-with-alist
+               (evil-numbers--swap-alist evil-numbers--superscript-alist)
+               x)))
 
-             ;; Find normal decimal literals.
-             (funcall replace-with (lambda (x) x) (lambda (x) x))
-             (error "No number at point or until end of line")))))))))
+           ;; Find subscript literals.
+           (funcall
+            replace-with
+            (lambda (x)
+              (evil-numbers--translate-with-alist
+               evil-numbers--subscript-alist x))
+            (lambda (x)
+              (evil-numbers--translate-with-alist
+               (evil-numbers--swap-alist evil-numbers--subscript-alist)
+               x)))
+
+           ;; Find normal decimal literals.
+           (funcall replace-with (lambda (x) x) (lambda (x) x))
+           (error "No number at point or until end of line"))))))))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental padded)
