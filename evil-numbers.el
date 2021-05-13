@@ -196,15 +196,25 @@ number with a + sign."
                    t))))
           (or
            ;; Find binary literals.
-           (evil-numbers--search-and-replace "0[bB][01]+" "01" "\\([01]+\\)" amount 2)
+           (evil-numbers--search-and-replace
+            "0[bB][01]+"  ;; Look back.
+            "01"          ;; Skip back.
+            "\\([01]+\\)" ;; Search forward.
+            amount 2)
 
            ;; Find octal literals.
-           (evil-numbers--search-and-replace "0[oO][0-7]+" "01234567" "\\([0-7]+\\)" amount 8)
+           (evil-numbers--search-and-replace
+            "0[oO][0-7]+"  ;; Look back.
+            "01234567"     ;; Skip back.
+            "\\([0-7]+\\)" ;; Search forward.
+            amount 8)
 
            ;; Find hex literals.
-           (evil-numbers--search-and-replace "0[xX][0-9a-fA-F]*"
-                                             "0123456789abcdefABCDEF"
-                                             "\\([0-9a-fA-F]+\\)" amount 16)
+           (evil-numbers--search-and-replace
+            "0[xX][0-9a-fA-F]*"      ;; Look back.
+            "0123456789abcdefABCDEF" ;; Skip back.
+            "\\([0-9a-fA-F]+\\)"     ;; Search forward.
+            amount 16)
 
            ;; Find superscript literals.
            (funcall
@@ -276,13 +286,14 @@ hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
 decimal: [0-9]+, e.g. 42 or 23"
   (or
    ;; Numbers or format specifier in front.
-   (looking-back (rx (or (+? digit)
-                         (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
-                         (in "₀₁₂₃₄₅₆₇₈₉" )
-                         (and "0" (or (and (in "bB") (*? (in "01")))
-                                      (and (in "oO") (*? (in "0-7")))
-                                      (and (in "xX") (*? (in digit "A-Fa-f")))))))
-                 (point-at-bol))
+   (looking-back
+    (rx (or (+? digit)
+            (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
+            (in "₀₁₂₃₄₅₆₇₈₉" )
+            (and "0" (or (and (in "bB") (*? (in "01")))
+                         (and (in "oO") (*? (in "0-7")))
+                         (and (in "xX") (*? (in digit "A-Fa-f")))))))
+    (point-at-bol))
    ;; Search for number in rest of line match 0 of specifier or digit,
    ;; being in a literal and after specifier is handled above.
    (and
@@ -304,9 +315,11 @@ and return non-nil."
   (when (looking-back look-back (point-at-bol))
     (skip-chars-backward skip-back)
     (search-forward-regexp search-forward)
-    (replace-match (evil-numbers--format (+ inc (string-to-number (match-string 1) base))
-                                        (if evil-numbers/padDefault (length (match-string 1)) 1)
-                                        base))
+    (replace-match
+     (evil-numbers--format
+      (+ inc (string-to-number (match-string 1) base))
+      (if evil-numbers/padDefault (length (match-string 1)) 1)
+      base))
     ;; Moves point one position back to conform with VIM.
     (forward-char -1)
     t))
