@@ -206,23 +206,17 @@ number with a + sign."
           (or
            ;; Find binary literals.
            (evil-numbers--search-and-replace
-            "0[bB][01]+"  ;; Look back.
-            "01"          ;; Skip back.
-            "\\([01]+\\)" ;; Search forward.
+            '(("0" . 1) ("bB" . 1) ("01" . nil))
             amount 2)
 
            ;; Find octal literals.
            (evil-numbers--search-and-replace
-            "0[oO][0-7]+"  ;; Look back.
-            "01234567"     ;; Skip back.
-            "\\([0-7]+\\)" ;; Search forward.
+            '(("0" . 1) ("oO" . 1) ("0-7" . nil))
             amount 8)
 
            ;; Find hex literals.
            (evil-numbers--search-and-replace
-            "0[xX][0-9a-fA-F]*"      ;; Look back.
-            "0123456789abcdefABCDEF" ;; Skip back.
-            "\\([0-9a-fA-F]+\\)"     ;; Search forward.
+            '(("0" . 1) ("xX" . 1) ("[:xdigit:]" . nil))
             amount 16)
 
            ;; Find superscript literals.
@@ -315,19 +309,62 @@ decimal: [0-9]+, e.g. 42 or 23"
      ;; Skip format specifiers and interpret as boolean.
      (<= 0 (skip-chars-forward "bBoOxX"))))))
 
-(defun evil-numbers--search-and-replace (look-back skip-back search-forward inc base)
+(defun evil-numbers--search-and-replace (char-skip-list inc base)
   "Perform the increment/decrement on the current line.
 
-When looking back at LOOK-BACK skip chars SKIP-BACK backwards,
-then SEARCH-FORWARD and replace number incremented by INC in BASE
-and return non-nil."
-  (when (looking-back look-back (point-at-bol))
-    (skip-chars-backward skip-back)
-    (search-forward-regexp search-forward)
+Argument CHAR-SKIP-LIST is a list of cons pairs each containing
+characters to skip and the number of characters expected to skip,
+
+When all characters are found in sequence,
+replace number incremented by INC in BASE and return non-nil."
+  (catch 'result
+    (save-excursion
+      ;; Skip backwards (as needed).
+      (let ((limit-min (line-beginning-position)))
+        (dolist (ch-pair (reverse char-skip-list))
+          (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
+            ;; Allow zero skipped as the cursor may not
+            ;; be at the end of the number.
+            (skip-chars-backward
+             ch-skip
+             (if ch-num
+                 (max (- (point) ch-num) limit-min)
+               limit-min)))))
+
+      ;; Skip forwards.
+      (let ((limit-max (line-end-position))
+            (pt-prev (point)))
+        (dolist (ch-pair char-skip-list)
+          (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
+            (setq pt-prev (point))
+            (let ((skipped
+                   (skip-chars-forward
+                    ch-skip
+                    (if ch-num
+                        (min (+ (point) ch-num) limit-max)
+                      limit-max))))
+              ;; Every step must succeed.
+              ;; While optional characters could be supported,
+              ;; currently they aren't needed.
+              ;;
+              ;; If a number was given, ensure it matches,
+              ;; otherwise just check the number isn't zero.
+              (when (if ch-num
+                        (not (eq ch-num skipped))
+                      (zerop skipped))
+                (throw 'result nil)))))
+
+        ;; It just so happens the last item in the list always
+        ;; matches the numbers to read.
+        (set-match-data (list pt-prev (point)))))
+
+    (goto-char (match-end 0))
     (replace-match
      (evil-numbers--format
-      (+ inc (string-to-number (match-string 1) base))
-      (if evil-numbers/padDefault (length (match-string 1)) 1)
+      (+ inc (string-to-number (match-string 0) base))
+      (if evil-numbers/padDefault
+          (- (match-end 0) (match-beginning 0))
+        1)
       base))
     ;; Moves point one position back to conform with VIM.
     (forward-char -1)
