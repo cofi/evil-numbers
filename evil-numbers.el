@@ -147,7 +147,16 @@ number with a + sign."
              (lambda (f) (funcall f beg end)))
            (lambda (beg end)
              (evil-with-restriction beg end
-               (while (re-search-forward "\\(?:0\\(?:[Bb][01]+\\|[Oo][0-7]+\\|[Xx][0-9A-Fa-f]+\\)\\|[+-]?[0-9]+\\|[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]\\|[₋₊]?[₀₁₂₃₄₅₆₇₈₉]\\)" nil t)
+               (while (re-search-forward
+                       (rx
+                        (or (and "0"
+                                 (or (and (in "Bb") (any "0-1"))
+                                     (and (in "Oo") (any "0-7"))
+                                     (and (in "Xx") xdigit)))
+                            (and (? (in "+-")) (any "0-9"))
+                            (and (? (in "⁺⁻")) (in "⁰¹²³⁴⁵⁶⁷⁸⁹"))
+                            (and (? (in "₊₋")) (in "₀₁₂₃₄₅₆₇₈₉"))))
+                       nil t)
                  ;; Backward char, to cancel out the forward-char below. We need
                  ;; this, as `re-search-forwards' puts us behind the match.
                  (backward-char)
