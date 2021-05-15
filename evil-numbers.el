@@ -452,12 +452,12 @@ replace number incremented by INC in BASE and return non-nil."
 (defun evil-numbers--format (num width base)
   "Format NUM with at least WIDTH space in BASE."
   (cond
-   ((= base 2) (evil-numbers-format-binary num width))
+   ((= base 2) (evil-numbers--format-binary num width))
    ((= base 8) (format (format "%%0%do" width) num))
    ((= base 16) (format (format "%%0%dX" width) num))
    (t "")))
 
-(defun evil-numbers-format-binary (number &optional width fillchar)
+(defun evil-numbers--format-binary (number &optional width fillchar)
   "Format NUMBER as binary.
 Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
 representation of NUMBER is smaller."
