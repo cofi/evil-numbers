@@ -206,17 +206,26 @@ number with a + sign."
           (or
            ;; Find binary literals.
            (evil-numbers--search-and-replace
-            '(("0" . 1) ("bB" . 1) ("01" . nil))
+            '(("0"  . 1)
+              ("bB" . 1)
+              ("01" . +))
+            3 ;; Number group.
             amount 2)
 
            ;; Find octal literals.
            (evil-numbers--search-and-replace
-            '(("0" . 1) ("oO" . 1) ("0-7" . nil))
+            '(("0"   . 1)
+              ("oO"  . 1)
+              ("0-7" . +))
+            3 ;; Number group.
             amount 8)
 
            ;; Find hex literals.
            (evil-numbers--search-and-replace
-            '(("0" . 1) ("xX" . 1) ("[:xdigit:]" . nil))
+            '(("0"          . 1)
+              ("xX"         . 1)
+              ("[:xdigit:]" . +))
+            3 ;; Number group.
             amount 16)
 
            ;; Find superscript literals.
@@ -309,66 +318,120 @@ decimal: [0-9]+, e.g. 42 or 23"
      ;; Skip format specifiers and interpret as boolean.
      (<= 0 (skip-chars-forward "bBoOxX"))))))
 
-(defun evil-numbers--search-and-replace (char-skip-list inc base)
+(defun evil-numbers--match-from-skip-chars (skip-chars dir do-check do-match)
+  "Match SKIP-CHARS in DIR (-1 or 1).
+
+When DO-CHECK is non-nil, any failure to match returns nil.
+When DO-MATCH is non-nil, match data is set.
+
+Each item in SKIP-CHARS is a cons pair.
+- The first item is the argument to pass to
+  `skip-chars-forward' or `skip-chars-backward'.
+- The second item specifies how many characters to match,
+  Valid values:
+  - Symbol `+' one or more.
+  - Symbol `*' zero or more.
+  - `integerp' this number exactly."
+  (catch 'result
+    (let* ((is-forward (< 0 dir))
+           (skip-chars-fn (if is-forward
+                              #'skip-chars-forward
+                            #'skip-chars-backward))
+           (clamp-fn (if is-forward
+                         #'min
+                       #'max))
+           (limit (if is-forward
+                      (line-end-position)
+                    (line-beginning-position)))
+           (point-init (point))
+           ;; Fill when `do-match' is set.
+           (match-list (list)))
+      (dolist (ch-pair (if is-forward
+                           skip-chars
+                         (reverse skip-chars)))
+        (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
+
+          ;; Beginning of the match.
+          (when do-match
+            (push (point) match-list))
+
+          (cond
+           ((integerp ch-num)
+            (let ((skipped (funcall
+                            skip-chars-fn
+                            ch-skip
+                            (funcall
+                             clamp-fn
+                             (+ (point) (* ch-num dir)) limit))))
+              (when do-check
+                (unless (eq skipped ch-num)
+                  (throw 'result nil)))))
+           ((memq ch-num (list '+ '*))
+            (let ((skipped (funcall
+                            skip-chars-fn
+                            ch-skip limit)))
+              (when do-check
+                (unless (>= skipped (if (eq ch-num '+) 1 0))
+                  (throw 'result nil)))))
+           (t
+            (error (format "Unknown type %S" ch-skip))))
+
+          ;; End of the match.
+          (when do-match
+            (push (point) match-list))))
+
+      ;; Match 0 for the full range (expected at the beginning).
+      (when do-match
+        (cond
+         (is-forward
+          (setq match-list (nreverse match-list))
+          (push (point) match-list)
+          (push point-init match-list))
+         (t
+          (push point-init match-list)
+          (push (point) match-list)))
+
+        (set-match-data match-list)))
+    t))
+
+(defun evil-numbers--search-and-replace (skip-chars num-group inc base)
   "Perform the increment/decrement on the current line.
 
-Argument CHAR-SKIP-LIST is a list of cons pairs each containing
-characters to skip and the number of characters expected to skip,
+For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
+NUM-GROUP is the match group used to evaluate the number.
 
 When all characters are found in sequence,
 replace number incremented by INC in BASE and return non-nil."
-  (catch 'result
-    (save-excursion
-      ;; Skip backwards (as needed).
-      (let ((limit-min (line-beginning-position)))
-        (dolist (ch-pair (reverse char-skip-list))
-          (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
-            ;; Allow zero skipped as the cursor may not
-            ;; be at the end of the number.
-            (skip-chars-backward
-             ch-skip
-             (if ch-num
-                 (max (- (point) ch-num) limit-min)
-               limit-min)))))
+  (save-match-data
+    (when (save-excursion
+            ;; Skip backwards (as needed), there may be no
+            ;; characters to skip back, so don't check the result.
+            (evil-numbers--match-from-skip-chars skip-chars -1 nil nil)
+            ;; Skip forwards from the beginning, setting match data.
+            (evil-numbers--match-from-skip-chars skip-chars 1 t t))
 
-      ;; Skip forwards.
-      (let ((limit-max (line-end-position))
-            (pt-prev (point)))
-        (dolist (ch-pair char-skip-list)
-          (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
-            (setq pt-prev (point))
-            (let ((skipped
-                   (skip-chars-forward
-                    ch-skip
-                    (if ch-num
-                        (min (+ (point) ch-num) limit-max)
-                      limit-max))))
-              ;; Every step must succeed.
-              ;; While optional characters could be supported,
-              ;; currently they aren't needed.
-              ;;
-              ;; If a number was given, ensure it matches,
-              ;; otherwise just check the number isn't zero.
-              (when (if ch-num
-                        (not (eq ch-num skipped))
-                      (zerop skipped))
-                (throw 'result nil)))))
+      (goto-char (match-end num-group))
+      (let* ((num-prev
+              (string-to-number
+               (match-string num-group)
+               base))
+             (num-next (+ inc num-prev))
+             (str-next
+              (evil-numbers--format
+               num-next
+               (if evil-numbers/padDefault
+                   (- (match-end num-group)
+                      (match-beginning num-group))
+                 1)
+               base)))
 
-        ;; It just so happens the last item in the list always
-        ;; matches the numbers to read.
-        (set-match-data (list pt-prev (point)))))
+        ;; Replace the number.
+        (replace-match str-next t t nil num-group))
 
-    (goto-char (match-end 0))
-    (replace-match
-     (evil-numbers--format
-      (+ inc (string-to-number (match-string 0) base))
-      (if evil-numbers/padDefault
-          (- (match-end 0) (match-beginning 0))
-        1)
-      base))
-    ;; Moves point one position back to conform with VIM.
-    (forward-char -1)
-    t))
+      ;; Moves point one position back to conform with VIM.
+      (forward-char -1)
+
+      t)))
 
 (defun evil-numbers--format (num width base)
   "Format NUM with at least WIDTH space in BASE."
