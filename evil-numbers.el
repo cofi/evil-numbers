@@ -206,26 +206,32 @@ number with a + sign."
           (or
            ;; Find binary literals.
            (evil-numbers--search-and-replace
-            '(("0"  . 1)
+            '(("+-" . *)
+              ("0"  . 1)
               ("bB" . 1)
               ("01" . +))
-            3 ;; Number group.
+            1 ;; Sign group.
+            4 ;; Number group.
             amount 2)
 
            ;; Find octal literals.
            (evil-numbers--search-and-replace
-            '(("0"   . 1)
+            '(("+-"  . *)
+              ("0"   . 1)
               ("oO"  . 1)
               ("0-7" . +))
-            3 ;; Number group.
+            1 ;; Sign group.
+            4 ;; Number group.
             amount 8)
 
            ;; Find hex literals.
            (evil-numbers--search-and-replace
-            '(("0"          . 1)
+            '(("+-"         . *)
+              ("0"          . 1)
               ("xX"         . 1)
               ("[:xdigit:]" . +))
-            3 ;; Number group.
+            1 ;; Sign group.
+            4 ;; Number group.
             amount 16)
 
            ;; Find superscript literals.
@@ -394,7 +400,7 @@ Each item in SKIP-CHARS is a cons pair.
         (set-match-data match-list)))
     t))
 
-(defun evil-numbers--search-and-replace (skip-chars num-group inc base)
+(defun evil-numbers--search-and-replace (skip-chars sign-group num-group inc base)
   "Perform the increment/decrement on the current line.
 
 For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
@@ -413,17 +419,27 @@ replace number incremented by INC in BASE and return non-nil."
       (goto-char (match-end num-group))
       (let* ((num-prev
               (string-to-number
-               (match-string num-group)
+               (concat (match-string sign-group)
+                       (match-string num-group))
                base))
              (num-next (+ inc num-prev))
              (str-next
               (evil-numbers--format
-               num-next
+               (abs num-next)
                (if evil-numbers/padDefault
                    (- (match-end num-group)
                       (match-beginning num-group))
                  1)
                base)))
+
+        ;; Replace the sign (as needed).
+        (cond
+         ;; From negative to positive.
+         ((and (< num-prev 0) (not (< num-next 0)))
+          (replace-match "" t t nil sign-group))
+         ;; From positive to negative.
+         ((and (not (< num-prev 0)) (< num-next 0))
+          (replace-match "-" t t nil sign-group)))
 
         ;; Replace the number.
         (replace-match str-next t t nil num-group))
