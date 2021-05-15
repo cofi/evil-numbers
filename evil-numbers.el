@@ -405,6 +405,7 @@ Each item in SKIP-CHARS is a cons pair.
 
 For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
 NUM-GROUP is the match group used to evaluate the number.
+SIGN-GROUP is the match group used for the sign ('-' or '+').
 
 When all characters are found in sequence,
 replace number incremented by INC in BASE and return non-nil."
