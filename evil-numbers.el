@@ -180,7 +180,8 @@ number with a + sign."
                  ;; Backward char, to cancel out the forward-char below. We need
                  ;; this, as `re-search-forwards' puts us behind the match.
                  (backward-char)
-                 (evil-numbers/inc-at-pt (* amount count) nil nil nil)
+                 (evil-numbers/inc-at-pt
+                  (* amount count) nil nil nil nil (cons padded nil))
                  (if incremental (setq count (+ count 1)))
                  ;; Undo VIM compatibility.
                  (forward-char 1)))))))))
