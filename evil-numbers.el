@@ -148,7 +148,8 @@ Return non-nil on success, leaving the point at the end of the number."
          ("01" . +))
        1 ;; Sign group.
        4 ;; Number group.
-       amount 2 padded)
+       amount 2 padded
+       #'identity #'identity)
       t)
 
      ;; Find octal literals.
@@ -159,7 +160,8 @@ Return non-nil on success, leaving the point at the end of the number."
          ("0-7" . +))
        1 ;; Sign group.
        4 ;; Number group.
-       amount 8 padded)
+       amount 8 padded
+       #'identity #'identity)
       t)
 
      ;; Find hex literals.
@@ -170,27 +172,40 @@ Return non-nil on success, leaving the point at the end of the number."
          ("[:xdigit:]" . +))
        1 ;; Sign group.
        4 ;; Number group.
-       amount 16 padded)
+       amount 16 padded
+       #'identity #'identity)
       t)
 
-     ;; Find superscript literals.
-     ((evil-numbers--search-and-replace-decimal
-       amount padded
+     ;; Find decimal literals.
+     ((evil-numbers--search-and-replace
+       '(("+-"         . *)
+         ("0123456789" . +))
+       1 ;; Sign group.
+       2 ;; Number group.
+       amount 10 padded
+       #'identity #'identity)
+      t)
+
+     ;; Find decimal literals (super-script).
+     ((evil-numbers--search-and-replace
+       '(("⁺⁻"         . *)
+         ("⁰¹²³⁴⁵⁶⁷⁸⁹" . +))
+       1 ;; Sign group.
+       2 ;; Number group.
+       amount 10 padded
        #'evil-numbers--decode-super
        #'evil-numbers--encode-super)
       t)
 
-     ;; Find subscript literals.
-     ((evil-numbers--search-and-replace-decimal
-       amount padded
+     ;; Find decimal literals (sub-script).
+     ((evil-numbers--search-and-replace
+       '(("₊₋"         . *)
+         ("₀₁₂₃₄₅₆₇₈₉" . +))
+       1 ;; Sign group.
+       2 ;; Number group.
+       amount 10 padded
        #'evil-numbers--decode-sub
        #'evil-numbers--encode-sub)
-      t)
-
-     ;; Find normal decimal literals.
-     ((evil-numbers--search-and-replace-decimal
-       amount padded
-       #'identity #'identity)
       t)
 
      ;; Failure (caller may error).
@@ -414,49 +429,8 @@ Each item in SKIP-CHARS is a cons pair.
         (set-match-data match-list)))
     t))
 
-(defun evil-numbers--search-and-replace-decimal (amount padded decode-fn encode-fn)
-  "Perform the increment/decrement on the current line.
-
-When PADDED is non-nil,
-the number keeps it's current width (with leading zeroes).
-
-DECODE-FN and ENCODE-FN optionally decode/encode the string
-into ASCII text (use for subscript & superscript).
-
-When all characters are found in sequence,
-replace number incremented by AMOUNT and return non-nil."
-  (skip-chars-backward
-   (funcall encode-fn "0123456789"))
-  (skip-chars-backward
-   (funcall encode-fn "+-") (- (point) 1))
-  (when (looking-at
-         (format
-          "[%s]?\\([%s]+\\)"
-          (funcall encode-fn "-+")
-          (funcall encode-fn "0123456789")))
-    (replace-match
-     (funcall
-      encode-fn
-      (let* ((padded
-              (or padded
-                  (eq ?0 (string-to-char (match-string 1)))))
-             (input (string-to-number
-                     (funcall decode-fn (match-string 0))))
-             (output (+ amount input))
-             (len (- (match-end 0) (match-beginning 0)))
-             (signed (and
-                      (memq (string-to-char (match-string 0))
-                            (funcall encode-fn '(?+ ?-)))
-                      (or padded (>= input 0)))))
-        (format
-         (format "%%%s0%dd"
-                 (if signed "+" "")
-                 (if padded len 0))
-         output))))
-
-    t))
-
-(defun evil-numbers--search-and-replace (skip-chars sign-group num-group amount base padded)
+(defun evil-numbers--search-and-replace
+    (skip-chars sign-group num-group amount base padded decode-fn encode-fn)
   "Perform the increment/decrement on the current line.
 
 For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
@@ -479,8 +453,9 @@ replace number incremented by AMOUNT in BASE and return non-nil."
       (goto-char (match-end num-group))
       (let* ((num-prev
               (string-to-number
-               (concat (match-string sign-group)
-                       (match-string num-group))
+               (funcall decode-fn
+                        (concat (match-string sign-group)
+                                (match-string num-group)))
                base))
              (num-next (+ amount num-prev))
              (str-next
@@ -499,10 +474,10 @@ replace number incremented by AMOUNT in BASE and return non-nil."
           (replace-match "" t t nil sign-group))
          ;; From positive to negative.
          ((and (not (< num-prev 0)) (< num-next 0))
-          (replace-match "-" t t nil sign-group)))
+          (replace-match (funcall encode-fn "-") t t nil sign-group)))
 
         ;; Replace the number.
-        (replace-match str-next t t nil num-group))
+        (replace-match (funcall encode-fn str-next) t t nil num-group))
 
       t)))
 
@@ -512,6 +487,7 @@ replace number incremented by AMOUNT in BASE and return non-nil."
    ((= base 2) (evil-numbers--format-binary num width))
    ((= base 8) (format (format "%%0%do" width) num))
    ((= base 16) (format (format "%%0%dX" width) num))
+   ((= base 10) (format (format "%%0%dd" width) num))
    (t "")))
 
 (defun evil-numbers--format-binary (number &optional width fillchar)
