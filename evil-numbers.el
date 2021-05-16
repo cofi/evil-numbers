@@ -107,7 +107,7 @@
 (defun evil-numbers--translate-with-alist (alist string)
   "Translate every symbol in STRING using ALIST."
   (funcall
-   (if (stringp string) #'concat (lambda (x) x))
+   (if (stringp string) #'concat #'identity)
    (mapcar (lambda (c) (cdr (assoc c alist))) string)))
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
@@ -134,7 +134,7 @@ number with a + sign."
   (setq amount (or amount 1))
   (setq padded (if (consp padded)
                    (car padded)
-                 (funcall (if padded #'not (lambda (x) x))
+                 (funcall (if padded #'not #'identity)
                           evil-numbers/padDefault)))
   (cond
    ((and beg end type)
@@ -257,7 +257,7 @@ number with a + sign."
                x)))
 
            ;; Find normal decimal literals.
-           (funcall replace-with (lambda (x) x) (lambda (x) x))
+           (funcall replace-with #'identity #'identity)
            (error "No number at point or until end of line"))))))))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
