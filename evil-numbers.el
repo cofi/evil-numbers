@@ -339,7 +339,7 @@ note that searching still starts at POINT."
                    (and "0"
                         (or (and (in "bB") (*? (in "01")))
                             (and (in "oO") (*? (in "0-7")))
-                            (and (in "xX") (*? (in digit "A-Fa-f")))))))
+                            (and (in "xX") (*? (in xdigit)))))))
            beg)))
    ;; Search for number in rest of line match 0 of specifier or digit,
    ;; being in a literal and after specifier is handled above.
