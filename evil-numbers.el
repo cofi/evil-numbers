@@ -183,7 +183,10 @@ NO-OFFSET don't apply offsets, expected  for VIM like behavior.
                        ;; Don't search back before this point.
                        (point)
                        ;; Ignore values after this point.
-                       end
+                       ;; Rely on narrowing, don't use `end' since
+                       ;; edits cause the absolute maximum point
+                       ;; to change while looping.
+                       (point-max)
                        ;; Type is handled here, ignore.
                        nil
                        ;; Incremental is handled here, ignore.
