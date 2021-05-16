@@ -204,17 +204,6 @@ NO-OFFSET don't apply offsets, expected  for VIM like behavior.
     (let ((point-next nil))
       (save-excursion
         (save-match-data
-
-          (unless no-offset
-            ;; `forward-char' so that we do not match the number
-            ;; directly behind us.
-            ;;
-            ;; Check the range to avoid end-of-buffer warning.
-            ;; Harmless but happens with block selection every
-            ;; time which is unreasonably noisy.
-            (unless (>= (1+ (point)) (point-max))
-              (forward-char)))
-
           (cond
            ((not (evil-numbers--search-number
                   (or beg (point-at-bol))
@@ -334,14 +323,24 @@ note that searching still starts at POINT."
   (or
    ;; Numbers or format specifier in front.
    (and (> (point) beg)
-        (looking-back
-         (rx (or (+? digit)
-                 (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
-                 (in "₀₁₂₃₄₅₆₇₈₉" )
-                 (and "0" (or (and (in "bB") (*? (in "01")))
-                              (and (in "oO") (*? (in "0-7")))
-                              (and (in "xX") (*? (in digit "A-Fa-f")))))))
-         beg))
+        (save-excursion
+          ;; `forward-char' so that we do not match the number
+          ;; directly behind us.
+          ;;
+          ;; Check the range to avoid end-of-buffer warning.
+          ;; Harmless but happens with block selection every
+          ;; time which is unreasonably noisy.
+          (unless (>= (1+ (point)) (point-max))
+            (forward-char))
+          (looking-back
+           (rx (or (+? digit)
+                   (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
+                   (in "₀₁₂₃₄₅₆₇₈₉" )
+                   (and "0"
+                        (or (and (in "bB") (*? (in "01")))
+                            (and (in "oO") (*? (in "0-7")))
+                            (and (in "xX") (*? (in digit "A-Fa-f")))))))
+           beg)))
    ;; Search for number in rest of line match 0 of specifier or digit,
    ;; being in a literal and after specifier is handled above.
    (and
