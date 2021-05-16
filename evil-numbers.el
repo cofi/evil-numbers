@@ -201,7 +201,7 @@ number with a + sign."
               ("01" . +))
             1 ;; Sign group.
             4 ;; Number group.
-            amount 2)
+            amount 2 padded)
 
            ;; Find octal literals.
            (evil-numbers--search-and-replace
@@ -211,7 +211,7 @@ number with a + sign."
               ("0-7" . +))
             1 ;; Sign group.
             4 ;; Number group.
-            amount 8)
+            amount 8 padded)
 
            ;; Find hex literals.
            (evil-numbers--search-and-replace
@@ -221,7 +221,7 @@ number with a + sign."
               ("[:xdigit:]" . +))
             1 ;; Sign group.
             4 ;; Number group.
-            amount 16)
+            amount 16 padded)
 
            ;; Find superscript literals.
            (evil-numbers--search-and-replace-decimal
@@ -393,10 +393,14 @@ Each item in SKIP-CHARS is a cons pair.
 (defun evil-numbers--search-and-replace-decimal (amount padded decode-fn encode-fn)
   "Perform the increment/decrement on the current line.
 
-See `evil-numbers/inc-at-pt' for docs on AMOUNT & PADDED.
+When PADDED is non-nil, the number keeps it's current width
+(with leading zeroes).
 
 DECODE-FN and ENCODE-FN optionally decode/encode the string
-into ASCII text (use for subscript & superscript)."
+into ASCII text (use for subscript & superscript).
+
+When all characters are found in sequence,
+replace number incremented by AMOUNT and return non-nil."
   (skip-chars-backward
    (funcall encode-fn "0123456789"))
   (skip-chars-backward
@@ -428,12 +432,15 @@ into ASCII text (use for subscript & superscript)."
 
     t))
 
-(defun evil-numbers--search-and-replace (skip-chars sign-group num-group amount base)
+(defun evil-numbers--search-and-replace (skip-chars sign-group num-group amount base padded)
   "Perform the increment/decrement on the current line.
 
 For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
 NUM-GROUP is the match group used to evaluate the number.
 SIGN-GROUP is the match group used for the sign ('-' or '+').
+
+When PADDED is non-nil, the number keeps it's current width
+(with leading zeroes).
 
 When all characters are found in sequence,
 replace number incremented by AMOUNT in BASE and return non-nil."
@@ -455,7 +462,7 @@ replace number incremented by AMOUNT in BASE and return non-nil."
              (str-next
               (evil-numbers--format
                (abs num-next)
-               (if evil-numbers/padDefault
+               (if padded
                    (- (match-end num-group)
                       (match-beginning num-group))
                  1)
