@@ -428,7 +428,7 @@ into ASCII text (use for subscript & superscript)."
 
     t))
 
-(defun evil-numbers--search-and-replace (skip-chars sign-group num-group inc base)
+(defun evil-numbers--search-and-replace (skip-chars sign-group num-group amount base)
   "Perform the increment/decrement on the current line.
 
 For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
@@ -436,7 +436,7 @@ NUM-GROUP is the match group used to evaluate the number.
 SIGN-GROUP is the match group used for the sign ('-' or '+').
 
 When all characters are found in sequence,
-replace number incremented by INC in BASE and return non-nil."
+replace number incremented by AMOUNT in BASE and return non-nil."
   (save-match-data
     (when (save-excursion
             ;; Skip backwards (as needed), there may be no
@@ -451,7 +451,7 @@ replace number incremented by INC in BASE and return non-nil."
                (concat (match-string sign-group)
                        (match-string num-group))
                base))
-             (num-next (+ inc num-prev))
+             (num-next (+ amount num-prev))
              (str-next
               (evil-numbers--format
                (abs num-next)
