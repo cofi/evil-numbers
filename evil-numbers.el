@@ -128,9 +128,78 @@
   (evil-numbers--translate-with-alist
    (evil-numbers--swap-alist evil-numbers--subscript-alist) x))
 
+(defun evil-numbers--inc-at-pt-impl (amount beg end padded)
+  "Increment the number at the current POINT by AMOUNT limited by BEG and END.
+
+Keep padding when PADDED is non-nil.
+
+Return non-nil on success, leaving the point at the end of the number."
+  (save-match-data
+    (cond
+     ;; Failure (caller may error).
+     ((not (evil-numbers--search-number beg end))
+      nil)
+
+     ;; Find binary literals.
+     ((evil-numbers--search-and-replace
+       '(("+-" . *)
+         ("0"  . 1)
+         ("bB" . 1)
+         ("01" . +))
+       1 ;; Sign group.
+       4 ;; Number group.
+       amount 2 padded)
+      t)
+
+     ;; Find octal literals.
+     ((evil-numbers--search-and-replace
+       '(("+-"  . *)
+         ("0"   . 1)
+         ("oO"  . 1)
+         ("0-7" . +))
+       1 ;; Sign group.
+       4 ;; Number group.
+       amount 8 padded)
+      t)
+
+     ;; Find hex literals.
+     ((evil-numbers--search-and-replace
+       '(("+-"         . *)
+         ("0"          . 1)
+         ("xX"         . 1)
+         ("[:xdigit:]" . +))
+       1 ;; Sign group.
+       4 ;; Number group.
+       amount 16 padded)
+      t)
+
+     ;; Find superscript literals.
+     ((evil-numbers--search-and-replace-decimal
+       amount padded
+       #'evil-numbers--decode-super
+       #'evil-numbers--encode-super)
+      t)
+
+     ;; Find subscript literals.
+     ((evil-numbers--search-and-replace-decimal
+       amount padded
+       #'evil-numbers--decode-sub
+       #'evil-numbers--encode-sub)
+      t)
+
+     ;; Find normal decimal literals.
+     ((evil-numbers--search-and-replace-decimal
+       amount padded
+       #'identity #'identity)
+      t)
+
+     ;; Failure (caller may error).
+     (t
+      nil))))
+
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt
-  (amount beg end type &optional incremental padded no-error no-offset)
+  (amount beg end type &optional incremental padded)
 
   "Increment the number at point or after point before `end-of-line' by AMOUNT.
 When region is selected, increment all numbers in the region by AMOUNT
@@ -147,15 +216,7 @@ behaviour set by `evil-numbers/pad-default', t is the opposite of
 `evil-numbers/pad-default', '(t) enables padding and '(nil) disables padding.
 Numbers with a leading zero are always padded. Signs are preserved when padding
 is enabled, i.e. increasing a negative number to a positive will result in a
-number with a + sign.
-
-NO-ERROR when non-nil, don't call error when no number is found.
-
-NO-OFFSET don't apply offsets, expected  for VIM like behavior.
-- Don't move the character back one at the end of the word.
-- Don't move the character forward one to prevent the previous word
-  from matching.
-  This simplifies calling this function in a loop."
+number with a + sign."
   :motion nil
   (interactive "*<c><R>")
 
@@ -170,112 +231,33 @@ NO-OFFSET don't apply offsets, expected  for VIM like behavior.
    ((and beg end type)
     (let ((count 1))
       (save-excursion
-        (save-match-data
-          (funcall
-           (if (eq type 'block)
-               (lambda (f) (evil-apply-on-block f beg end nil))
-             (lambda (f) (funcall f beg end)))
-           (lambda (beg end)
-             (evil-with-restriction beg end
-               (goto-char beg)
-               (while (evil-numbers/inc-at-pt
-                       (* amount count)
-                       ;; Don't search back before this point.
-                       (point)
-                       ;; Ignore values after this point.
-                       ;; Rely on narrowing, don't use `end' since
-                       ;; edits cause the absolute maximum point
-                       ;; to change while looping.
-                       (point-max)
-                       ;; Type is handled here, ignore.
-                       nil
-                       ;; Incremental is handled here, ignore.
-                       nil
-                       ;; Causes padded to be used as-is,
-                       ;; without modification.
-                       (list padded)
-                       ;; No error, silently fails once there are
-                       ;; no other numbers to operate on.
-                       ;; Or even if there were no numbers
-                       ;; (this matches VIM's behavior).
-                       t
-                       ;; No offset, simplifies stepping in this loop.
-                       t)
-                 (when incremental
-                   (setq count (+ count 1)))))))))))
+        (funcall
+         (if (eq type 'block)
+             (lambda (f) (evil-apply-on-block f beg end nil))
+           (lambda (f) (funcall f beg end)))
+         (lambda (beg end)
+           (evil-with-restriction beg end
+             (goto-char beg)
+             (while (evil-numbers--inc-at-pt-impl
+                     amount (point) (point-max) padded)
+               (when incremental
+                 (setq count (+ count 1))))))))))
+
+   ;; Handle the simple case, either the cursor is over a number,
+   ;; or a number exists between the cursor and `end-of-line'.
    (t
-    (let ((point-next nil))
-      (save-excursion
-        (save-match-data
-          (cond
-           ((not (evil-numbers--search-number
-                  (or beg (point-at-bol))
-                  (or end (point-at-eol))))
-            (unless no-error
-              (error "No number at point or until end of line")))
+    (let ((point-next
+           (save-excursion
+             (when (evil-numbers--inc-at-pt-impl
+                    amount (point-at-bol) (point-at-eol) padded)
+               (point)))))
 
-           ;; Find binary literals.
-           ((evil-numbers--search-and-replace
-             '(("+-" . *)
-               ("0"  . 1)
-               ("bB" . 1)
-               ("01" . +))
-             1 ;; Sign group.
-             4 ;; Number group.
-             amount 2 padded)
-            (setq point-next (point)))
+      (if (null point-next)
+          (error "No number at point or until end of line")
 
-           ;; Find octal literals.
-           ((evil-numbers--search-and-replace
-             '(("+-"  . *)
-               ("0"   . 1)
-               ("oO"  . 1)
-               ("0-7" . +))
-             1 ;; Sign group.
-             4 ;; Number group.
-             amount 8 padded)
-            (setq point-next (point)))
-
-           ;; Find hex literals.
-           ((evil-numbers--search-and-replace
-             '(("+-"         . *)
-               ("0"          . 1)
-               ("xX"         . 1)
-               ("[:xdigit:]" . +))
-             1 ;; Sign group.
-             4 ;; Number group.
-             amount 16 padded)
-            (setq point-next (point)))
-
-           ;; Find superscript literals.
-           ((evil-numbers--search-and-replace-decimal
-             amount padded
-             #'evil-numbers--decode-super
-             #'evil-numbers--encode-super)
-            (setq point-next (point)))
-
-           ;; Find subscript literals.
-           ((evil-numbers--search-and-replace-decimal
-             amount padded
-             #'evil-numbers--decode-sub
-             #'evil-numbers--encode-sub)
-            (setq point-next (point)))
-
-           ;; Find normal decimal literals.
-           ((evil-numbers--search-and-replace-decimal
-             amount padded
-             #'identity #'identity)
-            (setq point-next (point)))
-
-           (t
-            (unless no-error
-              (error "No number at point or until end of line"))))))
-
-      (when point-next
-        (unless no-offset
-          ;; Moves point one position back to conform with VIM.
-          (setq point-next (1- point-next)))
-        (goto-char point-next)
+        ;; Moves point one position back to conform with VIM,
+        ;; see `evil-adjust-cursor' for details.
+        (goto-char (1- point-next))
         t)))))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
