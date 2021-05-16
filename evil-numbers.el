@@ -110,6 +110,24 @@
    (if (stringp string) #'concat #'identity)
    (mapcar (lambda (c) (cdr (assoc c alist))) string)))
 
+(defun evil-numbers--encode-super (x)
+  "Convert X string into super-script."
+  (evil-numbers--translate-with-alist
+   evil-numbers--superscript-alist x))
+(defun evil-numbers--decode-super (x)
+  "Convert X string from super-script into regular characters."
+  (evil-numbers--translate-with-alist
+   (evil-numbers--swap-alist evil-numbers--superscript-alist) x))
+
+(defun evil-numbers--encode-sub (x)
+  "Convert X string into sub-script."
+  (evil-numbers--translate-with-alist
+   evil-numbers--subscript-alist x))
+(defun evil-numbers--decode-sub (x)
+  "Convert X string from sub-script into regular characters."
+  (evil-numbers--translate-with-alist
+   (evil-numbers--swap-alist evil-numbers--subscript-alist) x))
+
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt (amount beg end type &optional incremental padded)
   "Increment the number at point or after point before `end-of-line' by AMOUNT.
@@ -171,29 +189,29 @@ number with a + sign."
       (if (not (evil-numbers--search-number))
           (error "No number at point or until end of line")
         (let ((replace-with
-               (lambda (from to)
+               (lambda (decode-fn encode-fn)
                  (skip-chars-backward
-                  (funcall from "0123456789"))
+                  (funcall encode-fn "0123456789"))
                  (skip-chars-backward
-                  (funcall from "+-") (- (point) 1))
+                  (funcall encode-fn "+-") (- (point) 1))
                  (when (looking-at
                         (format
                          "[%s]?\\([%s]+\\)"
-                         (funcall from "-+")
-                         (funcall from "0123456789")))
+                         (funcall encode-fn "-+")
+                         (funcall encode-fn "0123456789")))
                    (replace-match
                     (funcall
-                     from
+                     encode-fn
                      (let* ((padded
                              (or padded
                                  (eq ?0 (string-to-char (match-string 1)))))
                             (input (string-to-number
-                                    (funcall to (match-string 0))))
+                                    (funcall decode-fn (match-string 0))))
                             (output (+ amount input))
                             (len (- (match-end 0) (match-beginning 0)))
                             (signed (and
                                      (memq (string-to-char (match-string 0))
-                                           (funcall from '(?+ ?-)))
+                                           (funcall encode-fn '(?+ ?-)))
                                      (or padded (>= input 0)))))
                        (format
                         (format "%%%s0%dd"
@@ -237,24 +255,14 @@ number with a + sign."
            ;; Find superscript literals.
            (funcall
             replace-with
-            (lambda (x)
-              (evil-numbers--translate-with-alist
-               evil-numbers--superscript-alist x))
-            (lambda (x)
-              (evil-numbers--translate-with-alist
-               (evil-numbers--swap-alist evil-numbers--superscript-alist)
-               x)))
+            #'evil-numbers--decode-super
+            #'evil-numbers--encode-super)
 
            ;; Find subscript literals.
            (funcall
             replace-with
-            (lambda (x)
-              (evil-numbers--translate-with-alist
-               evil-numbers--subscript-alist x))
-            (lambda (x)
-              (evil-numbers--translate-with-alist
-               (evil-numbers--swap-alist evil-numbers--subscript-alist)
-               x)))
+            #'evil-numbers--decode-sub
+            #'evil-numbers--encode-sub)
 
            ;; Find normal decimal literals.
            (funcall replace-with #'identity #'identity)
