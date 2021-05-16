@@ -395,8 +395,8 @@ Each item in SKIP-CHARS is a cons pair.
 (defun evil-numbers--search-and-replace-decimal (amount padded decode-fn encode-fn)
   "Perform the increment/decrement on the current line.
 
-When PADDED is non-nil, the number keeps it's current width
-(with leading zeroes).
+When PADDED is non-nil,
+the number keeps it's current width (with leading zeroes).
 
 DECODE-FN and ENCODE-FN optionally decode/encode the string
 into ASCII text (use for subscript & superscript).
@@ -441,8 +441,8 @@ For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
 NUM-GROUP is the match group used to evaluate the number.
 SIGN-GROUP is the match group used for the sign ('-' or '+').
 
-When PADDED is non-nil, the number keeps it's current width
-(with leading zeroes).
+When PADDED is non-nil,
+the number keeps it's current width (with leading zeroes).
 
 When all characters are found in sequence,
 replace number incremented by AMOUNT in BASE and return non-nil."
