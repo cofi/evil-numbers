@@ -348,10 +348,10 @@ note that searching still starts at POINT."
     (or
      (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
      (/= (char-before) ?0)
-     (and (> (point) 2) ;; Should also take bofp into consideration.
-          (not (looking-back "\\W0" 2)))
+     ;; Should also take bofp into consideration.
+     (not (looking-back "\\W0" (max beg (- (point) 2))))
      ;; Skip format specifiers and interpret as boolean.
-     (<= 0 (skip-chars-forward "bBoOxX"))))))
+     (<= 0 (skip-chars-forward "bBoOxX" end))))))
 
 (defun evil-numbers--match-from-skip-chars (skip-chars dir do-check do-match)
   "Match SKIP-CHARS in DIR (-1 or 1).
