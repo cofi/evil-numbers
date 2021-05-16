@@ -183,44 +183,15 @@ number with a + sign."
                  ;; Undo VIM compatibility.
                  (forward-char 1)))))))))
    (t
-    (save-match-data
-      ;; forward-char, so that we do not match the number directly behind us.
-      (forward-char)
-      (if (not (evil-numbers--search-number))
-          (error "No number at point or until end of line")
-        (let ((replace-with
-               (lambda (decode-fn encode-fn)
-                 (skip-chars-backward
-                  (funcall encode-fn "0123456789"))
-                 (skip-chars-backward
-                  (funcall encode-fn "+-") (- (point) 1))
-                 (when (looking-at
-                        (format
-                         "[%s]?\\([%s]+\\)"
-                         (funcall encode-fn "-+")
-                         (funcall encode-fn "0123456789")))
-                   (replace-match
-                    (funcall
-                     encode-fn
-                     (let* ((padded
-                             (or padded
-                                 (eq ?0 (string-to-char (match-string 1)))))
-                            (input (string-to-number
-                                    (funcall decode-fn (match-string 0))))
-                            (output (+ amount input))
-                            (len (- (match-end 0) (match-beginning 0)))
-                            (signed (and
-                                     (memq (string-to-char (match-string 0))
-                                           (funcall encode-fn '(?+ ?-)))
-                                     (or padded (>= input 0)))))
-                       (format
-                        (format "%%%s0%dd"
-                                (if signed "+" "")
-                                (if padded len 0))
-                        output))))
-                   ;; Moves point one position back to conform with VIM
-                   (forward-char -1)
-                   t))))
+    (let ((point-next nil))
+      (save-excursion
+        (save-match-data
+
+          ;; `forward-char' so that we do not match the number directly behind us.
+          (forward-char)
+          (unless (evil-numbers--search-number)
+            (error "No number at point or until end of line"))
+
           (or
            ;; Find binary literals.
            (evil-numbers--search-and-replace
@@ -253,20 +224,31 @@ number with a + sign."
             amount 16)
 
            ;; Find superscript literals.
-           (funcall
-            replace-with
+           (evil-numbers--search-and-replace-decimal
+            amount padded
             #'evil-numbers--decode-super
             #'evil-numbers--encode-super)
 
            ;; Find subscript literals.
-           (funcall
-            replace-with
+           (evil-numbers--search-and-replace-decimal
+            amount padded
             #'evil-numbers--decode-sub
             #'evil-numbers--encode-sub)
 
            ;; Find normal decimal literals.
-           (funcall replace-with #'identity #'identity)
-           (error "No number at point or until end of line"))))))))
+           (evil-numbers--search-and-replace-decimal
+            amount padded
+            #'identity #'identity)
+
+           (error "No number at point or until end of line"))
+
+          (setq point-next (point))))
+
+      ;; Moves point one position back to conform with VIM.
+      (goto-char (1- point-next))
+
+      ;; If there was no error, we had success.
+      t))))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental padded)
@@ -408,6 +390,44 @@ Each item in SKIP-CHARS is a cons pair.
         (set-match-data match-list)))
     t))
 
+(defun evil-numbers--search-and-replace-decimal (amount padded decode-fn encode-fn)
+  "Perform the increment/decrement on the current line.
+
+See `evil-numbers/inc-at-pt' for docs on AMOUNT & PADDED.
+
+DECODE-FN and ENCODE-FN optionally decode/encode the string
+into ASCII text (use for subscript & superscript)."
+  (skip-chars-backward
+   (funcall encode-fn "0123456789"))
+  (skip-chars-backward
+   (funcall encode-fn "+-") (- (point) 1))
+  (when (looking-at
+         (format
+          "[%s]?\\([%s]+\\)"
+          (funcall encode-fn "-+")
+          (funcall encode-fn "0123456789")))
+    (replace-match
+     (funcall
+      encode-fn
+      (let* ((padded
+              (or padded
+                  (eq ?0 (string-to-char (match-string 1)))))
+             (input (string-to-number
+                     (funcall decode-fn (match-string 0))))
+             (output (+ amount input))
+             (len (- (match-end 0) (match-beginning 0)))
+             (signed (and
+                      (memq (string-to-char (match-string 0))
+                            (funcall encode-fn '(?+ ?-)))
+                      (or padded (>= input 0)))))
+        (format
+         (format "%%%s0%dd"
+                 (if signed "+" "")
+                 (if padded len 0))
+         output))))
+
+    t))
+
 (defun evil-numbers--search-and-replace (skip-chars sign-group num-group inc base)
   "Perform the increment/decrement on the current line.
 
@@ -452,9 +472,6 @@ replace number incremented by INC in BASE and return non-nil."
 
         ;; Replace the number.
         (replace-match str-next t t nil num-group))
-
-      ;; Moves point one position back to conform with VIM.
-      (forward-char -1)
 
       t)))
 
