@@ -165,6 +165,8 @@ number with a + sign."
              (lambda (f) (funcall f beg end)))
            (lambda (beg end)
              (evil-with-restriction beg end
+               ;; Search from the beginning of the selection, see #21.
+               (goto-char (point-min))
                (while (re-search-forward
                        (rx
                         (or (and "0"
