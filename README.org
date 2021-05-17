@@ -1,4 +1,6 @@
-* Evil Numbers
+#+TITLE: Evil Numbers
+
+* Features
   - Increment / Decrement binary, octal, decimal and hex literals.
 
   - Works like =C-a= / =C-x= in VIM, i.e. searches for number up to =eol= and then
@@ -14,13 +16,28 @@
 
 
 ** Detected Literals
-    - Binary, e.g. =0b0101=, =0B0101=.
-    - Octal, e.g. =0o755=, =0O700=.
-    - Hexadecimal, e.g. =0xDEADBEEF=, =0XCAFE=.
-    - Unicode superscript and subscript, e.g. =²= and =₁=.
+   - Binary, e.g. =0b0101=, =0B0101=.
+   - Octal, e.g. =0o755=, =0O700=.
+   - Hexadecimal, e.g. =0xDEADBEEF=, =0XCAFE=.
+   - Unicode superscript and subscript, e.g. =²= and =₁=.
 
-** Install
-   Put in =load-path=, =(require 'evil-numbers)= and bind, for example:
+* Usage
+  Once this package is installed, all you need to do is bind keys to
+  =evil-numbers/inc-at-pt= and =evil-numbers/dec-at-pt=.
+
+  Position cursor over or before the literal and play with your numbers!
+
+  You may also want to bind keys to the incremental versions of these functions.
+
+** Customization
+
+   - =evil-numbers-pad-default=
+
+     Set  to =t= if you want numbers to be padded with zeros (numbers with a leading zero are always padded).
+     If you want both behaviors, all commands take an optional argument =padded=.
+
+** Key Bindings
+   Example key bindings:
 
    #+BEGIN_SRC emacs-lisp
      (global-set-key (kbd "C-c +") 'evil-numbers/inc-at-pt)
@@ -32,34 +49,39 @@
    or only in evil's normal state:
 
    #+BEGIN_SRC emacs-lisp
-    (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
-    (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
-    (define-key evil-normal-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
-    (define-key evil-normal-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
+     (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
+     (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
+     (define-key evil-normal-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+     (define-key evil-normal-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
    For window system users the keypad =+= and =-= present an alternative that can be
    directly bound without shadowing the regular =+= and =-=:
 
    #+BEGIN_SRC emacs-lisp
-   (define-key evil-normal-state-map (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
-   (define-key evil-normal-state-map (kbd "<kp-subtract>") 'evil-numbers/dec-at-pt)
-   (define-key evil-normal-state-map (kbd "C-<kp-add>") 'evil-numbers/inc-at-pt-incremental)
-   (define-key evil-normal-state-map (kbd "C-<kp-subtract>") 'evil-numbers/dec-at-pt-incremental)
+     (define-key evil-normal-state-map (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
+     (define-key evil-normal-state-map (kbd "<kp-subtract>") 'evil-numbers/dec-at-pt)
+     (define-key evil-normal-state-map (kbd "C-<kp-add>") 'evil-numbers/inc-at-pt-incremental)
+     (define-key evil-normal-state-map (kbd "C-<kp-subtract>") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
-  Set =evil-numbers-pad-default= to =t= if you want numbers to be padded with
-  zeros (numbers with a leading zero are always padded). If you want both
-  behaviors, all commands take an optional argument =padded=.
+* Install
 
-** Usage
-   Position cursor over or before the literal and play with your numbers!
+** Basic Installation
+   Put in =load-path=, =(require 'evil-numbers)= and set key bindings.
 
-** Known Bugs
-   See http://github.com/juliapath/evil-numbers/issues
+** Use Package
+   Assuming you have the =melpa= repository enabled, =use-package= can be used as follows.
 
-** Contributors
-   - Matthew Fidler <matthew.fidler@gmail.com>
-   - Michael Markert <markert.michael@gmail.com>
-   - Julia Path <julia@jpath.de>
-   - Campbell Barton <ideasman42@gmail.com>
+   #+BEGIN_SRC emacs-lisp
+     (use-package evil-numbers)
+   #+END_SRC
+
+* Known Bugs
+  See http://github.com/juliapath/evil-numbers/issues
+
+* Contributors
+  - Matthew Fidler <matthew.fidler@gmail.com>
+  - Michael Markert <markert.michael@gmail.com>
+  - Julia Path <julia@jpath.de>
+  - Campbell Barton <ideasman42@gmail.com>
