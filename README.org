@@ -48,7 +48,7 @@
    (define-key evil-normal-state-map (kbd "C-<kp-subtract>") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
-  Set =evil-numbers/padDefault= to =t= if you want numbers to be padded with
+  Set =evil-numbers-pad-default= to =t= if you want numbers to be padded with
   zeros (numbers with a leading zero are always padded). If you want both
   behaviors, all commands take an optional argument =padded=.
 

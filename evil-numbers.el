@@ -93,8 +93,11 @@
   "Support number increment/decrement."
   :group 'convenience)
 
+(define-obsolete-variable-alias
+  'evil-numbers/padDefault 'evil-numbers-pad-default "evil-numbers v0.6")
+
 ;;;###autoload
-(defcustom evil-numbers/padDefault nil
+(defcustom evil-numbers-pad-default nil
   "Whether numbers are padded by default."
   :group 'evil-numbers
   :type 'boolean
@@ -229,8 +232,8 @@ INCREMENTAL causes the first number to be increased by 1*AMOUNT, the second by
 2*AMOUNT and so on.
 
 PADDED is whether numbers should be padded (e.g. 10 -> 09). nil is default
-behavior set by `evil-numbers/pad-default', t is the opposite of
-`evil-numbers/pad-default', '(t) enables padding and '(nil) disables padding.
+behavior set by `evil-numbers-pad-default', t is the opposite of
+`evil-numbers-pad-default', '(t) enables padding and '(nil) disables padding.
 Numbers with a leading zero are always padded. Signs are preserved when padding
 is enabled, i.e. increasing a negative number to a positive will result in a
 number with a + sign."
@@ -241,7 +244,7 @@ number with a + sign."
   (setq padded (if (consp padded)
                    (car padded)
                  (funcall (if padded #'not #'identity)
-                          evil-numbers/padDefault)))
+                          evil-numbers-pad-default)))
   (cond
    ;; Handle selection (block or line).
    ;; Run this function in a loop (falling through to the `t' case).
