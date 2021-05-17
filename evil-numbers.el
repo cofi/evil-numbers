@@ -141,85 +141,99 @@
 Keep padding when PADDED is non-nil.
 
 Return non-nil on success, leaving the point at the end of the number."
+  (or
+   ;; Find binary literals:
+   ;; 0[bB][01]+, e.g. 0b101 or 0B0
+   (evil-numbers--search-and-replace
+    '(("+-" . \?)
+      ("0"  .  1)
+      ("bB" .  1)
+      ("01" .  +))
+    1 ;; Sign group.
+    4 ;; Number group.
+    amount 2 beg end padded
+    #'identity #'identity)
+
+   ;; Find octal literals:
+   ;; 0[oO][0-7]+, e.g. 0o42 or 0O5
+   (evil-numbers--search-and-replace
+    '(("+-"  . \?)
+      ("0"   .  1)
+      ("oO"  .  1)
+      ("0-7" .  +))
+    1 ;; Sign group.
+    4 ;; Number group.
+    amount 8 beg end padded
+    #'identity #'identity)
+
+   ;; Find hex literals.
+   ;; 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
+   (evil-numbers--search-and-replace
+    '(("+-"         . \?)
+      ("0"          .  1)
+      ("xX"         .  1)
+      ("[:xdigit:]" .  +))
+    1 ;; Sign group.
+    4 ;; Number group.
+    amount 16 beg end padded
+    #'identity #'identity)
+
+   ;; Find decimal literals:
+   ;; [0-9]+, e.g. 42 or 23.
+   (evil-numbers--search-and-replace
+    '(("+-"         . \?)
+      ("0123456789" .  +))
+    1 ;; Sign group.
+    2 ;; Number group.
+    amount 10 beg end padded
+    #'identity #'identity)
+
+   ;; Find decimal literals (super-script).
+   (evil-numbers--search-and-replace
+    '(("⁺⁻"         . \?)
+      ("⁰¹²³⁴⁵⁶⁷⁸⁹"  . +))
+    1 ;; Sign group.
+    2 ;; Number group.
+    amount 10 beg end padded
+    #'evil-numbers--decode-super #'evil-numbers--encode-super)
+
+   ;; Find decimal literals (sub-script).
+   (evil-numbers--search-and-replace
+    '(("₊₋"         . \?)
+      ("₀₁₂₃₄₅₆₇₈₉"  . +))
+    1 ;; Sign group.
+    2 ;; Number group.
+    amount 10 beg end padded
+    #'evil-numbers--decode-sub #'evil-numbers--encode-sub)))
+
+(defun evil-numbers--inc-at-pt-impl-with-search (amount beg end padded)
+  "Increment the number at the current POINT by AMOUNT limited by BEG and END.
+
+Keep padding when PADDED is non-nil.
+
+Return non-nil on success, leaving the point at the end of the number."
   (save-match-data
-    (when (evil-numbers--search-number beg end)
+    ;; Search for any text that might be part of a number,
+    ;; if `evil-numbers--search-and-replace' cannot parse it - that's fine,
+    ;; keep searching until `end'
+    ;; This avoids doubling up on number parsing logic.
+    (catch 'result
+      (let ((point-last (1- (point))))
+        (while (< point-last (point))
+          (when (evil-numbers--inc-at-pt-impl
+                 amount
+                 ;; Clamp limits to line bounds.
+                 ;; The caller may use a range that spans lines to
+                 ;; allow searching and finding items across
+                 ;; multiple lines (currently used for selection).
+                 (max beg (point-at-bol))
+                 (min end (point-at-eol))
+                 padded)
+            (throw 'result t))
 
-      ;; Clamp limits to line bounds.
-      ;; The caller may use a range that spans lines to allow searching and
-      ;; finding items across multiple lines (currently used for selection).
-      (setq beg (max beg (point-at-bol)))
-      (setq end (min end (point-at-eol)))
-
-      (cond
-       ;; Find binary literals.
-       ((evil-numbers--search-and-replace
-         '(("+-" . \?)
-           ("0"  .  1)
-           ("bB" .  1)
-           ("01" .  +))
-         1 ;; Sign group.
-         4 ;; Number group.
-         amount 2 beg end padded
-         #'identity #'identity)
-        t)
-
-       ;; Find octal literals.
-       ((evil-numbers--search-and-replace
-         '(("+-"  . \?)
-           ("0"   .  1)
-           ("oO"  .  1)
-           ("0-7" .  +))
-         1 ;; Sign group.
-         4 ;; Number group.
-         amount 8 beg end padded
-         #'identity #'identity)
-        t)
-
-       ;; Find hex literals.
-       ((evil-numbers--search-and-replace
-         '(("+-"         . \?)
-           ("0"          .  1)
-           ("xX"         .  1)
-           ("[:xdigit:]" .  +))
-         1 ;; Sign group.
-         4 ;; Number group.
-         amount 16 beg end padded
-         #'identity #'identity)
-        t)
-
-       ;; Find decimal literals.
-       ((evil-numbers--search-and-replace
-         '(("+-"         . \?)
-           ("0123456789" .  +))
-         1 ;; Sign group.
-         2 ;; Number group.
-         amount 10 beg end padded
-         #'identity #'identity)
-        t)
-
-       ;; Find decimal literals (super-script).
-       ((evil-numbers--search-and-replace
-         '(("⁺⁻"         . \?)
-           ("⁰¹²³⁴⁵⁶⁷⁸⁹"  . +))
-         1 ;; Sign group.
-         2 ;; Number group.
-         amount 10 beg end padded
-         #'evil-numbers--decode-super #'evil-numbers--encode-super)
-        t)
-
-       ;; Find decimal literals (sub-script).
-       ((evil-numbers--search-and-replace
-         '(("₊₋"         . \?)
-           ("₀₁₂₃₄₅₆₇₈₉"  . +))
-         1 ;; Sign group.
-         2 ;; Number group.
-         amount 10 beg end padded
-         #'evil-numbers--decode-sub #'evil-numbers--encode-sub)
-        t)
-
-       ;; Failure (caller may error).
-       (t
-        nil)))))
+          (setq point-last (point))
+          (unless (re-search-forward "[[:xdigit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" end t)
+            (throw 'result nil)))))))
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt
@@ -262,7 +276,7 @@ number with a + sign."
          (lambda (beg end)
            (evil-with-restriction beg end
              (goto-char beg)
-             (while (evil-numbers--inc-at-pt-impl
+             (while (evil-numbers--inc-at-pt-impl-with-search
                      amount (point) (point-max) padded)
                (when incremental
                  (setq count (+ count 1))))))))))
@@ -272,7 +286,15 @@ number with a + sign."
    (t
     (let ((point-next
            (save-excursion
-             (when (evil-numbers--inc-at-pt-impl
+             ;; `forward-char' so that we do not match the number
+             ;; directly behind us.
+             ;;
+             ;; Check the range to avoid end-of-buffer warning.
+             ;; Harmless but happens with block selection every
+             ;; time which is unreasonably noisy.
+             (unless (>= (1+ (point)) (point-max))
+               (forward-char))
+             (when (evil-numbers--inc-at-pt-impl-with-search
                     amount (point-at-bol) (point-at-eol) padded)
                (point)))))
 
@@ -318,52 +340,6 @@ on."
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incremental padded))
 
 ;;; Utilities.
-
-(defun evil-numbers--search-number (beg end)
-  "Return non-nil if a number literal at or after point.
-
-If point is already within or after a literal it stays.
-
-Literals may be in binary, octal, hexadecimal or decimal forms:
-binary: 0[bB][01]+, e.g. 0b101 or 0B0
-octal: 0[oO][0-7]+, e.g. 0o42 or 0O5
-hexadecimal 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
-decimal: [0-9]+, e.g. 42 or 23.
-
-BEG and END are limits for searching,
-note that searching still starts at POINT."
-  (or
-   ;; Numbers or format specifier in front.
-   (and (> (point) beg)
-        (save-excursion
-          ;; `forward-char' so that we do not match the number
-          ;; directly behind us.
-          ;;
-          ;; Check the range to avoid end-of-buffer warning.
-          ;; Harmless but happens with block selection every
-          ;; time which is unreasonably noisy.
-          (unless (>= (1+ (point)) (point-max))
-            (forward-char))
-          (looking-back
-           (rx (or (+? digit)
-                   (in "⁰¹²³⁴⁵⁶⁷⁸⁹")
-                   (in "₀₁₂₃₄₅₆₇₈₉" )
-                   (and "0"
-                        (or (and (in "bB") (*? (in "01")))
-                            (and (in "oO") (*? (in "0-7")))
-                            (and (in "xX") (*? (in xdigit)))))))
-           beg)))
-   ;; Search for number in rest of line match 0 of specifier or digit,
-   ;; being in a literal and after specifier is handled above.
-   (and
-    (re-search-forward "[[:digit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" end t)
-    (or
-     (not (memq (char-after) '(?b ?B ?o ?O ?x ?X)))
-     (/= (char-before) ?0)
-     ;; Should also take bofp into consideration.
-     (not (looking-back "\\W0" (max beg (- (point) 2))))
-     ;; Skip format specifiers and interpret as boolean.
-     (<= 0 (skip-chars-forward "bBoOxX" end))))))
 
 (defun evil-numbers--match-from-skip-chars
     (skip-chars dir limit do-check do-match)
