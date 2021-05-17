@@ -46,23 +46,23 @@
      (global-set-key (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
-   or only in evil's normal state:
+   or only in evil's normal & visual states:
 
    #+BEGIN_SRC emacs-lisp
-     (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
-     (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
-     (define-key evil-normal-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
-     (define-key evil-normal-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
+     (evil-define-key '(normal visual) 'global (kbd "C-c +") 'evil-numbers/inc-at-pt)
+     (evil-define-key '(normal visual) 'global (kbd "C-c -") 'evil-numbers/dec-at-pt)
+     (evil-define-key '(normal visual) 'global (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+     (evil-define-key '(normal visual) 'global (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
    For window system users the keypad =+= and =-= present an alternative that can be
    directly bound without shadowing the regular =+= and =-=:
 
    #+BEGIN_SRC emacs-lisp
-     (define-key evil-normal-state-map (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
-     (define-key evil-normal-state-map (kbd "<kp-subtract>") 'evil-numbers/dec-at-pt)
-     (define-key evil-normal-state-map (kbd "C-<kp-add>") 'evil-numbers/inc-at-pt-incremental)
-     (define-key evil-normal-state-map (kbd "C-<kp-subtract>") 'evil-numbers/dec-at-pt-incremental)
+     (evil-define-key '(normal visual) 'global (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
+     (evil-define-key '(normal visual) 'global (kbd "<kp-subtract>") 'evil-numbers/dec-at-pt)
+     (evil-define-key '(normal visual) 'global (kbd "C-<kp-add>") 'evil-numbers/inc-at-pt-incremental)
+     (evil-define-key '(normal visual) 'global (kbd "C-<kp-subtract>") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
 * Install

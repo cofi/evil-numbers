@@ -52,15 +52,10 @@
 
 ;; or only in evil's normal and visual state:
 
-;; (define-key evil-normal-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
-;; (define-key evil-visual-state-map (kbd "C-c +") 'evil-numbers/inc-at-pt)
-;; (define-key evil-normal-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
-;; (define-key evil-visual-state-map (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
-;;
-;; (define-key evil-normal-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
-;; (define-key evil-visual-state-map (kbd "C-c -") 'evil-numbers/dec-at-pt)
-;; (define-key evil-normal-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
-;; (define-key evil-visual-state-map (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c +") 'evil-numbers/inc-at-pt)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c -") 'evil-numbers/dec-at-pt)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
 
 ;; Usage:
 ;; Go and play with your numbers!
