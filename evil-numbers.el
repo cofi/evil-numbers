@@ -74,20 +74,24 @@
    (cons ?- ?⁻)
    (cons
     (cons ?+ ?⁺)
-    (mapcar (lambda (i) (cons
-                         (string-to-char (number-to-string i))
-                         (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)))
-            (number-sequence 0 9)))))
+    (mapcar
+     (lambda (i)
+       (cons
+        (string-to-char (number-to-string i))
+        (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)))
+     (number-sequence 0 9)))))
 
 (defconst evil-numbers--subscript-alist
   (cons
    (cons ?- ?₋)
    (cons
     (cons ?+ ?₊)
-    (mapcar (lambda (i) (cons
-                         (string-to-char (number-to-string i))
-                         (aref "₀₁₂₃₄₅₆₇₈₉" i)))
-            (number-sequence 0 9)))))
+    (mapcar
+     (lambda (i)
+       (cons
+        (string-to-char (number-to-string i))
+        (aref "₀₁₂₃₄₅₆₇₈₉" i)))
+     (number-sequence 0 9)))))
 
 (defgroup evil-numbers nil
   "Support number increment/decrement."
@@ -361,7 +365,8 @@ note that searching still starts at POINT."
      ;; Skip format specifiers and interpret as boolean.
      (<= 0 (skip-chars-forward "bBoOxX" end))))))
 
-(defun evil-numbers--match-from-skip-chars (skip-chars dir limit do-check do-match)
+(defun evil-numbers--match-from-skip-chars
+    (skip-chars dir limit do-check do-match)
   "Match SKIP-CHARS in DIR (-1 or 1), until LIMIT.
 
 When DO-CHECK is non-nil, any failure to match returns nil.
