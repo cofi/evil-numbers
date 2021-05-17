@@ -142,10 +142,10 @@ Return non-nil on success, leaving the point at the end of the number."
 
      ;; Find binary literals.
      ((evil-numbers--search-and-replace
-       '(("+-" . *)
-         ("0"  . 1)
-         ("bB" . 1)
-         ("01" . +))
+       '(("+-" . \?)
+         ("0"  .  1)
+         ("bB" .  1)
+         ("01" .  +))
        1 ;; Sign group.
        4 ;; Number group.
        amount 2 padded
@@ -154,10 +154,10 @@ Return non-nil on success, leaving the point at the end of the number."
 
      ;; Find octal literals.
      ((evil-numbers--search-and-replace
-       '(("+-"  . *)
-         ("0"   . 1)
-         ("oO"  . 1)
-         ("0-7" . +))
+       '(("+-"  . \?)
+         ("0"   .  1)
+         ("oO"  .  1)
+         ("0-7" .  +))
        1 ;; Sign group.
        4 ;; Number group.
        amount 8 padded
@@ -166,10 +166,10 @@ Return non-nil on success, leaving the point at the end of the number."
 
      ;; Find hex literals.
      ((evil-numbers--search-and-replace
-       '(("+-"         . *)
-         ("0"          . 1)
-         ("xX"         . 1)
-         ("[:xdigit:]" . +))
+       '(("+-"         . \?)
+         ("0"          .  1)
+         ("xX"         .  1)
+         ("[:xdigit:]" .  +))
        1 ;; Sign group.
        4 ;; Number group.
        amount 16 padded
@@ -178,8 +178,8 @@ Return non-nil on success, leaving the point at the end of the number."
 
      ;; Find decimal literals.
      ((evil-numbers--search-and-replace
-       '(("+-"         . *)
-         ("0123456789" . +))
+       '(("+-"         . \?)
+         ("0123456789" .  +))
        1 ;; Sign group.
        2 ;; Number group.
        amount 10 padded
@@ -188,8 +188,8 @@ Return non-nil on success, leaving the point at the end of the number."
 
      ;; Find decimal literals (super-script).
      ((evil-numbers--search-and-replace
-       '(("⁺⁻"         . *)
-         ("⁰¹²³⁴⁵⁶⁷⁸⁹" . +))
+       '(("⁺⁻"         . \?)
+         ("⁰¹²³⁴⁵⁶⁷⁸⁹"  . +))
        1 ;; Sign group.
        2 ;; Number group.
        amount 10 padded
@@ -199,8 +199,8 @@ Return non-nil on success, leaving the point at the end of the number."
 
      ;; Find decimal literals (sub-script).
      ((evil-numbers--search-and-replace
-       '(("₊₋"         . *)
-         ("₀₁₂₃₄₅₆₇₈₉" . +))
+       '(("₊₋"         . \?)
+         ("₀₁₂₃₄₅₆₇₈₉"  . +))
        1 ;; Sign group.
        2 ;; Number group.
        amount 10 padded
@@ -392,22 +392,35 @@ Each item in SKIP-CHARS is a cons pair.
 
           (cond
            ((integerp ch-num)
-            (let ((skipped (funcall
-                            skip-chars-fn
-                            ch-skip
-                            (funcall
-                             clamp-fn
-                             (+ (point) (* ch-num dir)) limit))))
+            (let ((skipped
+                   (funcall
+                    skip-chars-fn
+                    ch-skip
+                    (funcall clamp-fn (+ (point) (* ch-num dir)) limit))))
               (when do-check
                 (unless (eq skipped ch-num)
                   (throw 'result nil)))))
-           ((memq ch-num (list '+ '*))
-            (let ((skipped (funcall
-                            skip-chars-fn
-                            ch-skip limit)))
+           ((eq ch-num '+)
+            (let ((skipped
+                   (funcall
+                    skip-chars-fn
+                    ch-skip limit)))
               (when do-check
-                (unless (>= skipped (if (eq ch-num '+) 1 0))
+                (unless (>= skipped 1)
                   (throw 'result nil)))))
+
+           ;; No length checking needed as zero is acceptable.
+           ;; Skip these characters if they exist.
+           ((eq ch-num '*)
+            (funcall
+             skip-chars-fn
+             ch-skip
+             limit))
+           ((eq ch-num '\?)
+            (funcall
+             skip-chars-fn
+             ch-skip
+             (funcall clamp-fn (+ (point) dir) limit)))
            (t
             (error (format "Unknown type %S" ch-skip))))
 
