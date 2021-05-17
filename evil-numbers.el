@@ -343,8 +343,7 @@ Return non-nil on success, leaving the point at the end of the number."
       ("0"  .  1)
       ("bB" .  1)
       ("01" .  +))
-    1 ;; Sign group.
-    4 ;; Number group.
+    1 4 ;; Sign & number groups.
     amount 2 beg end padded
     #'identity #'identity)
 
@@ -355,20 +354,18 @@ Return non-nil on success, leaving the point at the end of the number."
       ("0"   .  1)
       ("oO"  .  1)
       ("0-7" .  +))
-    1 ;; Sign group.
-    4 ;; Number group.
+    1 4 ;; Sign & number groups.
     amount 8 beg end padded
     #'identity #'identity)
 
-   ;; Find hex literals.
+   ;; Find hex literals:
    ;; 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
    (evil-numbers--inc-at-pt-impl-with-match-chars
     '(("+-"         . \?)
       ("0"          .  1)
       ("xX"         .  1)
       ("[:xdigit:]" .  +))
-    1 ;; Sign group.
-    4 ;; Number group.
+    1 4 ;; Sign & number groups.
     amount 16 beg end padded
     #'identity #'identity)
 
@@ -377,8 +374,7 @@ Return non-nil on success, leaving the point at the end of the number."
    (evil-numbers--inc-at-pt-impl-with-match-chars
     '(("+-"         . \?)
       ("0123456789" .  +))
-    1 ;; Sign group.
-    2 ;; Number group.
+    1 2 ;; Sign & number groups.
     amount 10 beg end padded
     #'identity #'identity)
 
@@ -386,8 +382,7 @@ Return non-nil on success, leaving the point at the end of the number."
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("⁺⁻"                             . \?)
       (,evil-numbers--chars-superscript .  +))
-    1 ;; Sign group.
-    2 ;; Number group.
+    1 2 ;; Sign & number groups.
     amount 10 beg end padded
     #'evil-numbers--decode-super #'evil-numbers--encode-super)
 
@@ -395,8 +390,7 @@ Return non-nil on success, leaving the point at the end of the number."
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("₊₋"                           . \?)
       (,evil-numbers--chars-subscript .  +))
-    1 ;; Sign group.
-    2 ;; Number group.
+    1 2 ;; Sign & number groups.
     amount 10 beg end padded
     #'evil-numbers--decode-sub #'evil-numbers--encode-sub)))
 
