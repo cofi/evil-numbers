@@ -400,35 +400,37 @@ Return non-nil on success, leaving the point at the end of the number."
 Keep padding when PADDED is non-nil.
 
 Return non-nil on success, leaving the point at the end of the number."
-  (catch 'result
+  (let ((found nil))
     (save-match-data
-      (let ((point-last (1- (point))))
-        ;; Search for any text that might be part of a number,
-        ;; if `evil-numbers--search-and-replace' cannot parse it - that's fine,
-        ;; keep searching until `end'
-        ;; This avoids doubling up on number parsing logic.
-        (while (< point-last (point))
-          (when (evil-numbers--inc-at-pt-impl
-                 amount
-                 ;; Clamp limits to line bounds.
-                 ;; The caller may use a range that spans lines to
-                 ;; allow searching and finding items across
-                 ;; multiple lines (currently used for selection).
-                 (max beg (point-at-bol))
-                 (min end (point-at-eol))
-                 padded)
-            (throw 'result t))
+      ;; Search for any text that might be part of a number,
+      ;; if `evil-numbers--search-and-replace' cannot parse it - that's fine,
+      ;; keep searching until `end'
+      ;; This avoids doubling up on number parsing logic.
+      (while (and
+              ;; Found item, exit the loop.
+              (null
+               (when (evil-numbers--inc-at-pt-impl
+                      amount
+                      ;; Clamp limits to line bounds.
+                      ;; The caller may use a range that spans lines to
+                      ;; allow searching and finding items across
+                      ;; multiple lines (currently used for selection).
+                      (max beg (point-at-bol))
+                      (min end (point-at-eol))
+                      padded)
+                 (setq found t)))
 
-          (setq point-last (point))
-          (unless (re-search-forward
-                   (concat "["
-                           "[:xdigit:]"
-                           evil-numbers--chars-superscript
-                           evil-numbers--chars-subscript
-                           "]")
-                   end t)
-            (throw 'result nil)))))))
-
+              ;; Search failed, exit the loop.
+              (re-search-forward
+               (concat "["
+                       "[:xdigit:]"
+                       evil-numbers--chars-superscript
+                       evil-numbers--chars-subscript
+                       "]")
+               end t))
+        ;; Empty while body.
+        nil))
+    found))
 
 ;; ---------------------------------------------------------------------------
 ;; Public Functions
