@@ -33,7 +33,7 @@
 
 ;; Increment / Decrement binary, octal, decimal and hex literals.
 
-;; Works like C-a/C-x in vim, i.e. searches for number up to EOL and
+;; Works like C-a/C-x in VIM, i.e. searches for number up to EOL and
 ;; then increments or decrements and keep zero padding up.
 
 ;; Known Bugs:
@@ -229,7 +229,7 @@ INCREMENTAL causes the first number to be increased by 1*AMOUNT, the second by
 2*AMOUNT and so on.
 
 PADDED is whether numbers should be padded (e.g. 10 -> 09). nil is default
-behaviour set by `evil-numbers/pad-default', t is the opposite of
+behavior set by `evil-numbers/pad-default', t is the opposite of
 `evil-numbers/pad-default', '(t) enables padding and '(nil) disables padding.
 Numbers with a leading zero are always padded. Signs are preserved when padding
 is enabled, i.e. increasing a negative number to a positive will result in a
@@ -278,7 +278,8 @@ number with a + sign."
         t)))))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
-(evil-define-operator evil-numbers/dec-at-pt (amount beg end type &optional incremental padded)
+(evil-define-operator evil-numbers/dec-at-pt
+  (amount beg end type &optional incremental padded)
   "Decrement the number at point or after point before `end-of-line' by AMOUNT.
 
 If a region is active, decrement all the numbers at a point by AMOUNT.
@@ -289,7 +290,8 @@ This function uses `evil-numbers/inc-at-pt'"
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type incremental padded))
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt-incremental "evil-numbers" nil t)
-(evil-define-operator evil-numbers/inc-at-pt-incremental (amount beg end type padded)
+(evil-define-operator evil-numbers/inc-at-pt-incremental
+  (amount beg end type padded)
   "Increment the number at point or after point before `end-of-line' by AMOUNT.
 
 If a region is active, increment all the numbers at a point by AMOUNT*n, where
@@ -301,7 +303,8 @@ on."
   (evil-numbers/inc-at-pt amount beg end type 'incremental padded))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt-incremental "evil-numbers" nil t)
-(evil-define-operator evil-numbers/dec-at-pt-incremental (amount beg end type padded)
+(evil-define-operator evil-numbers/dec-at-pt-incremental
+  (amount beg end type padded)
   "Like `evil-numbers/inc-at-pt-incremental' but with negated argument AMOUNT."
   :motion nil
   (interactive "*<c><R>")
