@@ -69,6 +69,27 @@
 
 (require 'evil)
 
+;; ---------------------------------------------------------------------------
+;; Custom Variables
+
+(defgroup evil-numbers nil
+  "Support number increment/decrement."
+  :group 'convenience)
+
+(define-obsolete-variable-alias
+  'evil-numbers/padDefault 'evil-numbers-pad-default "evil-numbers v0.6")
+
+;;;###autoload
+(defcustom evil-numbers-pad-default nil
+  "Whether numbers are padded by default."
+  :group 'evil-numbers
+  :type 'boolean
+  :options '(nil t))
+
+
+;; ---------------------------------------------------------------------------
+;; Internal Variables
+
 (defconst evil-numbers--chars-superscript "⁰¹²³⁴⁵⁶⁷⁸⁹")
 (defconst evil-numbers--chars-subscript "₀₁₂₃₄₅₆₇₈₉")
 
@@ -96,19 +117,128 @@
         (aref evil-numbers--chars-subscript i)))
      (number-sequence 0 9)))))
 
-(defgroup evil-numbers nil
-  "Support number increment/decrement."
-  :group 'convenience)
 
-(define-obsolete-variable-alias
-  'evil-numbers/padDefault 'evil-numbers-pad-default "evil-numbers v0.6")
+;; ---------------------------------------------------------------------------
+;; Internal Utilities
+;;
+;; Not directly related to incrementing numbers.
 
-;;;###autoload
-(defcustom evil-numbers-pad-default nil
-  "Whether numbers are padded by default."
-  :group 'evil-numbers
-  :type 'boolean
-  :options '(nil t))
+(defun evil-numbers--format-binary (number &optional width fillchar)
+  "Format NUMBER as binary.
+Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
+representation of NUMBER is smaller."
+  (let (nums
+        (fillchar (or fillchar ?0)))
+    (while (> number 0)
+      (push (number-to-string (% number 2)) nums)
+      (setq number (truncate number 2)))
+    (let ((len (length nums)))
+      (apply #'concat
+             (if (and width (< len width))
+                 (make-string (- width len) fillchar)
+               "")
+             nums))))
+
+(defun evil-numbers--format (num width base)
+  "Format NUM with at least WIDTH space in BASE."
+  (cond
+   ((= base 2) (evil-numbers--format-binary num width))
+   ((= base 8) (format (format "%%0%do" width) num))
+   ((= base 16) (format (format "%%0%dX" width) num))
+   ((= base 10) (format (format "%%0%dd" width) num))
+   (t "")))
+
+(defun evil-numbers--match-from-skip-chars
+    (match-chars dir limit do-check do-match)
+  "Match MATCH-CHARS in DIR (-1 or 1), until LIMIT.
+
+When DO-CHECK is non-nil, any failure to match returns nil.
+When DO-MATCH is non-nil, match data is set.
+
+Each item in MATCH-CHARS is a cons pair.
+- The first item is the argument to pass to
+  `skip-chars-forward' or `skip-chars-backward'.
+- The second item specifies how many characters to match,
+  Valid values:
+  - Symbol `+' one or more.
+  - Symbol `*' zero or more.
+  - `integerp' this number exactly."
+  (catch 'result
+    (let* ((is-forward (< 0 dir))
+           (skip-chars-fn (if is-forward
+                              #'skip-chars-forward
+                            #'skip-chars-backward))
+           (clamp-fn (if is-forward
+                         #'min
+                       #'max))
+           (point-init (point))
+           ;; Fill when `do-match' is set.
+           (match-list (list)))
+
+      ;; Sanity check.
+      (when (if is-forward (> (point) limit) (< (point) limit))
+        (error "Limit is on wrong side of point (internal error)"))
+
+      (dolist (ch-pair (if is-forward
+                           match-chars
+                         (reverse match-chars)))
+        (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
+
+          ;; Beginning of the match.
+          (when do-match
+            (push (point) match-list))
+
+          (cond
+           ((integerp ch-num)
+            (let ((skipped
+                   (funcall
+                    skip-chars-fn
+                    ch-skip
+                    (funcall clamp-fn (+ (point) (* ch-num dir)) limit))))
+              (when do-check
+                (unless (eq skipped ch-num)
+                  (throw 'result nil)))))
+           ((eq ch-num '+)
+            (let ((skipped
+                   (funcall
+                    skip-chars-fn
+                    ch-skip limit)))
+              (when do-check
+                (unless (>= skipped 1)
+                  (throw 'result nil)))))
+
+           ;; No length checking needed as zero is acceptable.
+           ;; Skip these characters if they exist.
+           ((eq ch-num '*)
+            (funcall
+             skip-chars-fn
+             ch-skip
+             limit))
+           ((eq ch-num '\?)
+            (funcall
+             skip-chars-fn
+             ch-skip
+             (funcall clamp-fn (+ (point) dir) limit)))
+           (t
+            (error (format "Unknown type %S" ch-skip))))
+
+          ;; End of the match.
+          (when do-match
+            (push (point) match-list))))
+
+      ;; Match 0 for the full range (expected at the beginning).
+      (when do-match
+        (cond
+         (is-forward
+          (setq match-list (nreverse match-list))
+          (push (point) match-list)
+          (push point-init match-list))
+         (t
+          (push point-init match-list)
+          (push (point) match-list)))
+
+        (set-match-data match-list)))
+    t))
 
 (defun evil-numbers--swap-alist (alist)
   "Swap association list ALIST."
@@ -138,6 +268,67 @@
   (evil-numbers--translate-with-alist
    (evil-numbers--swap-alist evil-numbers--subscript-alist) x))
 
+
+;; ---------------------------------------------------------------------------
+;; Internal Implementation
+
+(defun evil-numbers--inc-at-pt-impl-with-match-chars
+    (match-chars
+     sign-group num-group
+     amount base
+     beg end
+     padded
+     decode-fn encode-fn)
+  "Perform the increment/decrement on the current line.
+
+For MATCH-CHARS docs see `evil-numbers--match-from-skip-chars'.
+NUM-GROUP is the match group used to evaluate the number.
+SIGN-GROUP is the match group used for the sign ('-' or '+').
+
+When PADDED is non-nil,
+the number keeps it's current width (with leading zeroes).
+
+When all characters are found in sequence,
+replace number incremented by AMOUNT in BASE and return non-nil."
+  (save-match-data
+    (when (save-excursion
+            ;; Skip backwards (as needed), there may be no
+            ;; characters to skip back, so don't check the result.
+            (evil-numbers--match-from-skip-chars match-chars -1 beg nil nil)
+            ;; Skip forwards from the beginning, setting match data.
+            (evil-numbers--match-from-skip-chars match-chars 1 end t t))
+
+      (goto-char (match-end num-group))
+      (let* ((num-prev
+              (string-to-number
+               (funcall decode-fn
+                        (concat (match-string sign-group)
+                                (match-string num-group)))
+               base))
+             (num-next (+ amount num-prev))
+             (str-next
+              (evil-numbers--format
+               (abs num-next)
+               (if padded
+                   (- (match-end num-group)
+                      (match-beginning num-group))
+                 1)
+               base)))
+
+        ;; Replace the sign (as needed).
+        (cond
+         ;; From negative to positive.
+         ((and (< num-prev 0) (not (< num-next 0)))
+          (replace-match "" t t nil sign-group))
+         ;; From positive to negative.
+         ((and (not (< num-prev 0)) (< num-next 0))
+          (replace-match (funcall encode-fn "-") t t nil sign-group)))
+
+        ;; Replace the number.
+        (replace-match (funcall encode-fn str-next) t t nil num-group))
+
+      t)))
+
 (defun evil-numbers--inc-at-pt-impl (amount beg end padded)
   "Increment the number at the current POINT by AMOUNT limited by BEG and END.
 
@@ -147,7 +338,7 @@ Return non-nil on success, leaving the point at the end of the number."
   (or
    ;; Find binary literals:
    ;; 0[bB][01]+, e.g. 0b101 or 0B0
-   (evil-numbers--search-and-replace
+   (evil-numbers--inc-at-pt-impl-with-match-chars
     '(("+-" . \?)
       ("0"  .  1)
       ("bB" .  1)
@@ -159,7 +350,7 @@ Return non-nil on success, leaving the point at the end of the number."
 
    ;; Find octal literals:
    ;; 0[oO][0-7]+, e.g. 0o42 or 0O5
-   (evil-numbers--search-and-replace
+   (evil-numbers--inc-at-pt-impl-with-match-chars
     '(("+-"  . \?)
       ("0"   .  1)
       ("oO"  .  1)
@@ -171,7 +362,7 @@ Return non-nil on success, leaving the point at the end of the number."
 
    ;; Find hex literals.
    ;; 0[xX][0-9a-fA-F]+, e.g. 0xBEEF or 0Xcafe
-   (evil-numbers--search-and-replace
+   (evil-numbers--inc-at-pt-impl-with-match-chars
     '(("+-"         . \?)
       ("0"          .  1)
       ("xX"         .  1)
@@ -183,7 +374,7 @@ Return non-nil on success, leaving the point at the end of the number."
 
    ;; Find decimal literals:
    ;; [0-9]+, e.g. 42 or 23.
-   (evil-numbers--search-and-replace
+   (evil-numbers--inc-at-pt-impl-with-match-chars
     '(("+-"         . \?)
       ("0123456789" .  +))
     1 ;; Sign group.
@@ -192,7 +383,7 @@ Return non-nil on success, leaving the point at the end of the number."
     #'identity #'identity)
 
    ;; Find decimal literals (super-script).
-   (evil-numbers--search-and-replace
+   (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("⁺⁻"                             . \?)
       (,evil-numbers--chars-superscript .  +))
     1 ;; Sign group.
@@ -201,7 +392,7 @@ Return non-nil on success, leaving the point at the end of the number."
     #'evil-numbers--decode-super #'evil-numbers--encode-super)
 
    ;; Find decimal literals (sub-script).
-   (evil-numbers--search-and-replace
+   (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("₊₋"                           . \?)
       (,evil-numbers--chars-subscript .  +))
     1 ;; Sign group.
@@ -215,13 +406,13 @@ Return non-nil on success, leaving the point at the end of the number."
 Keep padding when PADDED is non-nil.
 
 Return non-nil on success, leaving the point at the end of the number."
-  (save-match-data
-    ;; Search for any text that might be part of a number,
-    ;; if `evil-numbers--search-and-replace' cannot parse it - that's fine,
-    ;; keep searching until `end'
-    ;; This avoids doubling up on number parsing logic.
-    (catch 'result
+  (catch 'result
+    (save-match-data
       (let ((point-last (1- (point))))
+        ;; Search for any text that might be part of a number,
+        ;; if `evil-numbers--search-and-replace' cannot parse it - that's fine,
+        ;; keep searching until `end'
+        ;; This avoids doubling up on number parsing logic.
         (while (< point-last (point))
           (when (evil-numbers--inc-at-pt-impl
                  amount
@@ -243,6 +434,10 @@ Return non-nil on success, leaving the point at the end of the number."
                            "]")
                    end t)
             (throw 'result nil)))))))
+
+
+;; ---------------------------------------------------------------------------
+;; Public Functions
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt
@@ -347,182 +542,6 @@ on."
   :motion nil
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incremental padded))
-
-;;; Utilities.
-
-(defun evil-numbers--match-from-skip-chars
-    (skip-chars dir limit do-check do-match)
-  "Match SKIP-CHARS in DIR (-1 or 1), until LIMIT.
-
-When DO-CHECK is non-nil, any failure to match returns nil.
-When DO-MATCH is non-nil, match data is set.
-
-Each item in SKIP-CHARS is a cons pair.
-- The first item is the argument to pass to
-  `skip-chars-forward' or `skip-chars-backward'.
-- The second item specifies how many characters to match,
-  Valid values:
-  - Symbol `+' one or more.
-  - Symbol `*' zero or more.
-  - `integerp' this number exactly."
-  (catch 'result
-    (let* ((is-forward (< 0 dir))
-           (skip-chars-fn (if is-forward
-                              #'skip-chars-forward
-                            #'skip-chars-backward))
-           (clamp-fn (if is-forward
-                         #'min
-                       #'max))
-           (point-init (point))
-           ;; Fill when `do-match' is set.
-           (match-list (list)))
-
-      ;; Sanity check.
-      (when (if is-forward (> (point) limit) (< (point) limit))
-        (error "Limit is on wrong side of point (internal error)"))
-
-      (dolist (ch-pair (if is-forward
-                           skip-chars
-                         (reverse skip-chars)))
-        (pcase-let ((`(,ch-skip . ,ch-num) ch-pair))
-
-          ;; Beginning of the match.
-          (when do-match
-            (push (point) match-list))
-
-          (cond
-           ((integerp ch-num)
-            (let ((skipped
-                   (funcall
-                    skip-chars-fn
-                    ch-skip
-                    (funcall clamp-fn (+ (point) (* ch-num dir)) limit))))
-              (when do-check
-                (unless (eq skipped ch-num)
-                  (throw 'result nil)))))
-           ((eq ch-num '+)
-            (let ((skipped
-                   (funcall
-                    skip-chars-fn
-                    ch-skip limit)))
-              (when do-check
-                (unless (>= skipped 1)
-                  (throw 'result nil)))))
-
-           ;; No length checking needed as zero is acceptable.
-           ;; Skip these characters if they exist.
-           ((eq ch-num '*)
-            (funcall
-             skip-chars-fn
-             ch-skip
-             limit))
-           ((eq ch-num '\?)
-            (funcall
-             skip-chars-fn
-             ch-skip
-             (funcall clamp-fn (+ (point) dir) limit)))
-           (t
-            (error (format "Unknown type %S" ch-skip))))
-
-          ;; End of the match.
-          (when do-match
-            (push (point) match-list))))
-
-      ;; Match 0 for the full range (expected at the beginning).
-      (when do-match
-        (cond
-         (is-forward
-          (setq match-list (nreverse match-list))
-          (push (point) match-list)
-          (push point-init match-list))
-         (t
-          (push point-init match-list)
-          (push (point) match-list)))
-
-        (set-match-data match-list)))
-    t))
-
-(defun evil-numbers--search-and-replace
-    (skip-chars
-     sign-group num-group
-     amount base
-     beg end
-     padded
-     decode-fn encode-fn)
-  "Perform the increment/decrement on the current line.
-
-For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
-NUM-GROUP is the match group used to evaluate the number.
-SIGN-GROUP is the match group used for the sign ('-' or '+').
-
-When PADDED is non-nil,
-the number keeps it's current width (with leading zeroes).
-
-When all characters are found in sequence,
-replace number incremented by AMOUNT in BASE and return non-nil."
-  (save-match-data
-    (when (save-excursion
-            ;; Skip backwards (as needed), there may be no
-            ;; characters to skip back, so don't check the result.
-            (evil-numbers--match-from-skip-chars skip-chars -1 beg nil nil)
-            ;; Skip forwards from the beginning, setting match data.
-            (evil-numbers--match-from-skip-chars skip-chars 1 end t t))
-
-      (goto-char (match-end num-group))
-      (let* ((num-prev
-              (string-to-number
-               (funcall decode-fn
-                        (concat (match-string sign-group)
-                                (match-string num-group)))
-               base))
-             (num-next (+ amount num-prev))
-             (str-next
-              (evil-numbers--format
-               (abs num-next)
-               (if padded
-                   (- (match-end num-group)
-                      (match-beginning num-group))
-                 1)
-               base)))
-
-        ;; Replace the sign (as needed).
-        (cond
-         ;; From negative to positive.
-         ((and (< num-prev 0) (not (< num-next 0)))
-          (replace-match "" t t nil sign-group))
-         ;; From positive to negative.
-         ((and (not (< num-prev 0)) (< num-next 0))
-          (replace-match (funcall encode-fn "-") t t nil sign-group)))
-
-        ;; Replace the number.
-        (replace-match (funcall encode-fn str-next) t t nil num-group))
-
-      t)))
-
-(defun evil-numbers--format (num width base)
-  "Format NUM with at least WIDTH space in BASE."
-  (cond
-   ((= base 2) (evil-numbers--format-binary num width))
-   ((= base 8) (format (format "%%0%do" width) num))
-   ((= base 16) (format (format "%%0%dX" width) num))
-   ((= base 10) (format (format "%%0%dd" width) num))
-   (t "")))
-
-(defun evil-numbers--format-binary (number &optional width fillchar)
-  "Format NUMBER as binary.
-Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
-representation of NUMBER is smaller."
-  (let (nums
-        (fillchar (or fillchar ?0)))
-    (while (> number 0)
-      (push (number-to-string (% number 2)) nums)
-      (setq number (truncate number 2)))
-    (let ((len (length nums)))
-      (apply #'concat
-             (if (and width (< len width))
-                 (make-string (- width len) fillchar)
-               "")
-             nums))))
 
 (provide 'evil-numbers)
 ;;; evil-numbers.el ends here
