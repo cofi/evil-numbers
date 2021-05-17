@@ -69,6 +69,9 @@
 
 (require 'evil)
 
+(defconst evil-numbers--chars-superscript "⁰¹²³⁴⁵⁶⁷⁸⁹")
+(defconst evil-numbers--chars-subscript "₀₁₂₃₄₅₆₇₈₉")
+
 (defconst evil-numbers--superscript-alist
   (cons
    (cons ?- ?⁻)
@@ -78,7 +81,7 @@
      (lambda (i)
        (cons
         (string-to-char (number-to-string i))
-        (aref "⁰¹²³⁴⁵⁶⁷⁸⁹" i)))
+        (aref evil-numbers--chars-superscript i)))
      (number-sequence 0 9)))))
 
 (defconst evil-numbers--subscript-alist
@@ -90,7 +93,7 @@
      (lambda (i)
        (cons
         (string-to-char (number-to-string i))
-        (aref "₀₁₂₃₄₅₆₇₈₉" i)))
+        (aref evil-numbers--chars-subscript i)))
      (number-sequence 0 9)))))
 
 (defgroup evil-numbers nil
@@ -190,8 +193,8 @@ Return non-nil on success, leaving the point at the end of the number."
 
    ;; Find decimal literals (super-script).
    (evil-numbers--search-and-replace
-    '(("⁺⁻"         . \?)
-      ("⁰¹²³⁴⁵⁶⁷⁸⁹"  . +))
+    `(("⁺⁻"                             . \?)
+      (,evil-numbers--chars-superscript .  +))
     1 ;; Sign group.
     2 ;; Number group.
     amount 10 beg end padded
@@ -199,8 +202,8 @@ Return non-nil on success, leaving the point at the end of the number."
 
    ;; Find decimal literals (sub-script).
    (evil-numbers--search-and-replace
-    '(("₊₋"         . \?)
-      ("₀₁₂₃₄₅₆₇₈₉"  . +))
+    `(("₊₋"                           . \?)
+      (,evil-numbers--chars-subscript .  +))
     1 ;; Sign group.
     2 ;; Number group.
     amount 10 beg end padded
@@ -232,7 +235,13 @@ Return non-nil on success, leaving the point at the end of the number."
             (throw 'result t))
 
           (setq point-last (point))
-          (unless (re-search-forward "[[:xdigit:]⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉]" end t)
+          (unless (re-search-forward
+                   (concat "["
+                           "[:xdigit:]"
+                           evil-numbers--chars-superscript
+                           evil-numbers--chars-subscript
+                           "]")
+                   end t)
             (throw 'result nil)))))))
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
