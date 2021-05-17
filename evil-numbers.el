@@ -135,82 +135,84 @@ Keep padding when PADDED is non-nil.
 
 Return non-nil on success, leaving the point at the end of the number."
   (save-match-data
-    (cond
-     ;; Failure (caller may error).
-     ((not (evil-numbers--search-number beg end))
-      nil)
+    (when (evil-numbers--search-number beg end)
 
-     ;; Find binary literals.
-     ((evil-numbers--search-and-replace
-       '(("+-" . \?)
-         ("0"  .  1)
-         ("bB" .  1)
-         ("01" .  +))
-       1 ;; Sign group.
-       4 ;; Number group.
-       amount 2 padded
-       #'identity #'identity)
-      t)
+      ;; Clamp limits to line bounds.
+      ;; The caller may use a range that spans lines to allow searching and
+      ;; finding items across multiple lines (currently used for selection).
+      (setq beg (max beg (point-at-bol)))
+      (setq end (min end (point-at-eol)))
 
-     ;; Find octal literals.
-     ((evil-numbers--search-and-replace
-       '(("+-"  . \?)
-         ("0"   .  1)
-         ("oO"  .  1)
-         ("0-7" .  +))
-       1 ;; Sign group.
-       4 ;; Number group.
-       amount 8 padded
-       #'identity #'identity)
-      t)
+      (cond
+       ;; Find binary literals.
+       ((evil-numbers--search-and-replace
+         '(("+-" . \?)
+           ("0"  .  1)
+           ("bB" .  1)
+           ("01" .  +))
+         1 ;; Sign group.
+         4 ;; Number group.
+         amount 2 beg end padded
+         #'identity #'identity)
+        t)
 
-     ;; Find hex literals.
-     ((evil-numbers--search-and-replace
-       '(("+-"         . \?)
-         ("0"          .  1)
-         ("xX"         .  1)
-         ("[:xdigit:]" .  +))
-       1 ;; Sign group.
-       4 ;; Number group.
-       amount 16 padded
-       #'identity #'identity)
-      t)
+       ;; Find octal literals.
+       ((evil-numbers--search-and-replace
+         '(("+-"  . \?)
+           ("0"   .  1)
+           ("oO"  .  1)
+           ("0-7" .  +))
+         1 ;; Sign group.
+         4 ;; Number group.
+         amount 8 beg end padded
+         #'identity #'identity)
+        t)
 
-     ;; Find decimal literals.
-     ((evil-numbers--search-and-replace
-       '(("+-"         . \?)
-         ("0123456789" .  +))
-       1 ;; Sign group.
-       2 ;; Number group.
-       amount 10 padded
-       #'identity #'identity)
-      t)
+       ;; Find hex literals.
+       ((evil-numbers--search-and-replace
+         '(("+-"         . \?)
+           ("0"          .  1)
+           ("xX"         .  1)
+           ("[:xdigit:]" .  +))
+         1 ;; Sign group.
+         4 ;; Number group.
+         amount 16 beg end padded
+         #'identity #'identity)
+        t)
 
-     ;; Find decimal literals (super-script).
-     ((evil-numbers--search-and-replace
-       '(("⁺⁻"         . \?)
-         ("⁰¹²³⁴⁵⁶⁷⁸⁹"  . +))
-       1 ;; Sign group.
-       2 ;; Number group.
-       amount 10 padded
-       #'evil-numbers--decode-super
-       #'evil-numbers--encode-super)
-      t)
+       ;; Find decimal literals.
+       ((evil-numbers--search-and-replace
+         '(("+-"         . \?)
+           ("0123456789" .  +))
+         1 ;; Sign group.
+         2 ;; Number group.
+         amount 10 beg end padded
+         #'identity #'identity)
+        t)
 
-     ;; Find decimal literals (sub-script).
-     ((evil-numbers--search-and-replace
-       '(("₊₋"         . \?)
-         ("₀₁₂₃₄₅₆₇₈₉"  . +))
-       1 ;; Sign group.
-       2 ;; Number group.
-       amount 10 padded
-       #'evil-numbers--decode-sub
-       #'evil-numbers--encode-sub)
-      t)
+       ;; Find decimal literals (super-script).
+       ((evil-numbers--search-and-replace
+         '(("⁺⁻"         . \?)
+           ("⁰¹²³⁴⁵⁶⁷⁸⁹"  . +))
+         1 ;; Sign group.
+         2 ;; Number group.
+         amount 10 beg end padded
+         #'evil-numbers--decode-super #'evil-numbers--encode-super)
+        t)
 
-     ;; Failure (caller may error).
-     (t
-      nil))))
+       ;; Find decimal literals (sub-script).
+       ((evil-numbers--search-and-replace
+         '(("₊₋"         . \?)
+           ("₀₁₂₃₄₅₆₇₈₉"  . +))
+         1 ;; Sign group.
+         2 ;; Number group.
+         amount 10 beg end padded
+         #'evil-numbers--decode-sub #'evil-numbers--encode-sub)
+        t)
+
+       ;; Failure (caller may error).
+       (t
+        nil)))))
 
 ;;;###autoload (autoload 'evil-numbers/inc-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/inc-at-pt
@@ -353,8 +355,8 @@ note that searching still starts at POINT."
      ;; Skip format specifiers and interpret as boolean.
      (<= 0 (skip-chars-forward "bBoOxX" end))))))
 
-(defun evil-numbers--match-from-skip-chars (skip-chars dir do-check do-match)
-  "Match SKIP-CHARS in DIR (-1 or 1).
+(defun evil-numbers--match-from-skip-chars (skip-chars dir limit do-check do-match)
+  "Match SKIP-CHARS in DIR (-1 or 1), until LIMIT.
 
 When DO-CHECK is non-nil, any failure to match returns nil.
 When DO-MATCH is non-nil, match data is set.
@@ -375,12 +377,14 @@ Each item in SKIP-CHARS is a cons pair.
            (clamp-fn (if is-forward
                          #'min
                        #'max))
-           (limit (if is-forward
-                      (line-end-position)
-                    (line-beginning-position)))
            (point-init (point))
            ;; Fill when `do-match' is set.
            (match-list (list)))
+
+      ;; Sanity check.
+      (when (if is-forward (> (point) limit) (< (point) limit))
+        (error "Limit is on wrong side of point (internal error)"))
+
       (dolist (ch-pair (if is-forward
                            skip-chars
                          (reverse skip-chars)))
@@ -443,7 +447,12 @@ Each item in SKIP-CHARS is a cons pair.
     t))
 
 (defun evil-numbers--search-and-replace
-    (skip-chars sign-group num-group amount base padded decode-fn encode-fn)
+    (skip-chars
+     sign-group num-group
+     amount base
+     beg end
+     padded
+     decode-fn encode-fn)
   "Perform the increment/decrement on the current line.
 
 For SKIP-CHARS docs see `evil-numbers--match-from-skip-chars'.
@@ -459,9 +468,9 @@ replace number incremented by AMOUNT in BASE and return non-nil."
     (when (save-excursion
             ;; Skip backwards (as needed), there may be no
             ;; characters to skip back, so don't check the result.
-            (evil-numbers--match-from-skip-chars skip-chars -1 nil nil)
+            (evil-numbers--match-from-skip-chars skip-chars -1 beg nil nil)
             ;; Skip forwards from the beginning, setting match data.
-            (evil-numbers--match-from-skip-chars skip-chars 1 t t))
+            (evil-numbers--match-from-skip-chars skip-chars 1 end t t))
 
       (goto-char (match-end num-group))
       (let* ((num-prev
