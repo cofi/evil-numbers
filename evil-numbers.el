@@ -122,7 +122,7 @@
   "Format NUMBER as binary.
 Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
 representation of NUMBER is smaller."
-  (let (nums
+  (let ((nums (list))
         (fillchar (or fillchar ?0)))
     (while (> number 0)
       (push (number-to-string (% number 2)) nums)
