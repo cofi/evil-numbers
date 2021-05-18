@@ -427,6 +427,7 @@ Return non-nil on success, leaving the point at the end of the number."
         nil))
     found))
 
+
 ;; ---------------------------------------------------------------------------
 ;; Public Functions
 
@@ -445,8 +446,8 @@ INCREMENTAL causes the first number to be increased by 1*AMOUNT, the second by
 2*AMOUNT and so on.
 
 PADDED is whether numbers should be padded (e.g. 10 -> 09). nil is default
-behavior set by `evil-numbers-pad-default', t is the opposite of
-`evil-numbers-pad-default', '(t) enables padding and '(nil) disables padding.
+behavior set by `evil-numbers-pad-default', t is the opposite of `evil-numbers-pad-default',
+'(t) enables padding and '(nil) disables padding.
 Numbers with a leading zero are always padded. Signs are preserved when padding
 is enabled, i.e. increasing a negative number to a positive will result in a
 number with a + sign."
@@ -506,9 +507,7 @@ number with a + sign."
   (amount beg end type &optional incremental padded)
   "Decrement the number at point or after point before `end-of-line' by AMOUNT.
 
-If a region is active, decrement all the numbers at a point by AMOUNT.
-
-This function uses `evil-numbers/inc-at-pt'"
+If a region is active, decrement all the numbers at a point by AMOUNT."
   :motion nil
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type incremental padded))
@@ -518,10 +517,10 @@ This function uses `evil-numbers/inc-at-pt'"
   (amount beg end type padded)
   "Increment the number at point or after point before `end-of-line' by AMOUNT.
 
-If a region is active, increment all the numbers at a point by AMOUNT*n, where
+When a region is active, increment all the numbers at a point by AMOUNT*n, where
 n is the index of the number among the numbers in the region, starting at 1.
-That is increment the first number by AMOUNT, the second by 2*AMOUNT, and so
-on."
+That is increment the first number by AMOUNT, the second by 2*AMOUNT,
+and so on."
   :motion nil
   (interactive "*<c><R>")
   (evil-numbers/inc-at-pt amount beg end type 'incremental padded))
