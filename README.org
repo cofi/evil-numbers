@@ -7,8 +7,7 @@
     increments or decrements.
 
   - When a region is active, as in evil's visual mode, all the
-    numbers within that region will be incremented/decremented (unlike
-    in VIM)
+    numbers within that region will be incremented/decremented (unlike in VIM).
 
   - Increment/decrement numbers incrementally like =g C-a= / =g C-x= in VIM.
 
@@ -46,7 +45,7 @@
      (global-set-key (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
-   or only in evil's normal & visual states:
+   or only in evil's =normal= & =visual= states:
 
    #+BEGIN_SRC emacs-lisp
      (evil-define-key '(normal visual) 'global (kbd "C-c +") 'evil-numbers/inc-at-pt)
@@ -55,8 +54,7 @@
      (evil-define-key '(normal visual) 'global (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
    #+END_SRC
 
-   For window system users the keypad =+= and =-= present an alternative that can be
-   directly bound without shadowing the regular =+= and =-=:
+   Keypad =+= and =-= present an alternative that can be directly bound without shadowing the regular =+= and =-=:
 
    #+BEGIN_SRC emacs-lisp
      (evil-define-key '(normal visual) 'global (kbd "<kp-add>") 'evil-numbers/inc-at-pt)
