@@ -1,5 +1,18 @@
 #+TITLE: Evil Numbers CHANGELOG
 
+* In Development
+
+** Fixes
+
++ Fix padding being ignored with block selection.
++ Fix #21 increment w/ selection ignores items before the cursor.
++ Fix padded argument is ignored on non-decimal types.
++ Fix #20 The cursor moves when increment/decrement fails.
++ Fix #18 operating on bin/hex/octal failed w/ the cursor at the start.
++ Fix #17 bin/octal/hex numbers don't support becoming negative.
++ Fix hyphen-separated numbers handling.
++ Fix auto-loading evil macros.
+
 * 0.5
 
 ** Additions
@@ -12,5 +25,6 @@
   a positive number (if padding is enabled).
 
 ** Fixes
-+ Fix numbers being pushed out of selections
-  (e.g. calling inc-at-pt on ^9 9$ where ^$ denote the start and end of the selection would result in 10 9).
++ Fix numbers being pushed out of selections.
+
+  (e.g. calling inc-at-pt on =^9 9$= where =^$= denote the start and end of the selection would result in =10 9=).
