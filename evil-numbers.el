@@ -74,7 +74,6 @@
 (define-obsolete-variable-alias
   'evil-numbers/padDefault 'evil-numbers-pad-default "evil-numbers v0.6")
 
-;;;###autoload
 (defcustom evil-numbers-pad-default nil
   "Whether numbers are padded by default."
   :group 'evil-numbers
