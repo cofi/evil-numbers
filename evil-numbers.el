@@ -337,16 +337,14 @@ replace number incremented by AMOUNT in BASE and return non-nil."
 
         ;; Maintain case.
         (when do-case
+          ;; Upper case (already set), no need to handle here.
           (cond
-           ;; Upper case (already set).
-           ((eq evil-numbers-case 'upcase)
-            nil)
-           ((eq evil-numbers-case 'downcase)
-            (setq str-next (downcase str-next)))
            ;; Keep current case.
-           (t
+           ((null evil-numbers-case)
             (when (eq -1 (or (evil-numbers--case-category str-prev -1) -1))
-              (setq str-next (downcase str-next))))))
+              (setq str-next (downcase str-next))))
+           ((eq evil-numbers-case 'downcase)
+            (setq str-next (downcase str-next)))))
 
         ;; Replace the sign (as needed).
         (cond
@@ -439,6 +437,8 @@ Return non-nil on success, leaving the point at the end of the number."
       ;; if `evil-numbers--search-and-replace' cannot parse it - that's fine,
       ;; keep searching until `end'
       ;; This avoids doubling up on number parsing logic.
+      ;;
+      ;; Note that the while body is empty.
       (while (and
               ;; Found item, exit the loop.
               (null
@@ -460,9 +460,7 @@ Return non-nil on success, leaving the point at the end of the number."
                        evil-numbers--chars-superscript
                        evil-numbers--chars-subscript
                        "]")
-               end t))
-        ;; Empty while body.
-        nil))
+               end t))))
     found))
 
 
