@@ -118,6 +118,23 @@
 ;;
 ;; Not directly related to incrementing numbers.
 
+(defun evil-numbers--case-category (str default)
+  "Categorize the case of STR or return DEFAULT when there is no case.
+
+- default: No case.
+-       1: Upper case.
+-      -1: Lower case.
+-     nil: Mixed case."
+  (let ((str-dn (downcase str))
+        (str-up (upcase str)))
+    (if (string-equal str str-dn)
+        (if (string-equal str str-up)
+            default
+          -1)
+      (if (string-equal str str-up)
+          1
+        nil))))
+
 (defun evil-numbers--format-binary (number &optional width fillchar)
   "Format NUMBER as binary.
 Fill up to WIDTH with FILLCHAR (defaults to ?0) if binary
@@ -273,6 +290,7 @@ Each item in MATCH-CHARS is a cons pair.
      amount base
      beg end
      padded
+     do-case
      decode-fn encode-fn)
   "Perform the increment/decrement on the current line.
 
@@ -294,12 +312,11 @@ replace number incremented by AMOUNT in BASE and return non-nil."
             (evil-numbers--match-from-skip-chars match-chars 1 end t t))
 
       (goto-char (match-end num-group))
-      (let* ((num-prev
-              (string-to-number
-               (funcall decode-fn
-                        (concat (match-string sign-group)
-                                (match-string num-group)))
-               base))
+      (let* ((str-prev
+              (funcall decode-fn
+                       (concat (match-string sign-group)
+                               (match-string num-group))))
+             (num-prev (string-to-number str-prev base))
              (num-next (+ amount num-prev))
              (str-next
               (evil-numbers--format
@@ -309,6 +326,11 @@ replace number incremented by AMOUNT in BASE and return non-nil."
                       (match-beginning num-group))
                  1)
                base)))
+
+        ;; Maintain case.
+        (when do-case
+          (when (eq -1 (or (evil-numbers--case-category str-prev -1) -1))
+            (setq str-next (downcase str-next))))
 
         ;; Replace the sign (as needed).
         (cond
@@ -339,7 +361,7 @@ Return non-nil on success, leaving the point at the end of the number."
       ("bB" .  1)
       ("01" .  +))
     1 4 ;; Sign & number groups.
-    amount 2 beg end padded
+    amount 2 beg end padded nil
     #'identity #'identity)
 
    ;; Find octal literals:
@@ -350,7 +372,7 @@ Return non-nil on success, leaving the point at the end of the number."
       ("oO"  .  1)
       ("0-7" .  +))
     1 4 ;; Sign & number groups.
-    amount 8 beg end padded
+    amount 8 beg end padded nil
     #'identity #'identity)
 
    ;; Find hex literals:
@@ -361,7 +383,7 @@ Return non-nil on success, leaving the point at the end of the number."
       ("xX"         .  1)
       ("[:xdigit:]" .  +))
     1 4 ;; Sign & number groups.
-    amount 16 beg end padded
+    amount 16 beg end padded t
     #'identity #'identity)
 
    ;; Find decimal literals:
@@ -370,7 +392,7 @@ Return non-nil on success, leaving the point at the end of the number."
     '(("+-"         . \?)
       ("0123456789" .  +))
     1 2 ;; Sign & number groups.
-    amount 10 beg end padded
+    amount 10 beg end padded nil
     #'identity #'identity)
 
    ;; Find decimal literals (super-script).
@@ -378,7 +400,7 @@ Return non-nil on success, leaving the point at the end of the number."
     `(("⁺⁻"                             . \?)
       (,evil-numbers--chars-superscript .  +))
     1 2 ;; Sign & number groups.
-    amount 10 beg end padded
+    amount 10 beg end padded nil
     #'evil-numbers--decode-super #'evil-numbers--encode-super)
 
    ;; Find decimal literals (sub-script).
@@ -386,7 +408,7 @@ Return non-nil on success, leaving the point at the end of the number."
     `(("₊₋"                           . \?)
       (,evil-numbers--chars-subscript .  +))
     1 2 ;; Sign & number groups.
-    amount 10 beg end padded
+    amount 10 beg end padded nil
     #'evil-numbers--decode-sub #'evil-numbers--encode-sub)))
 
 (defun evil-numbers--inc-at-pt-impl-with-search (amount beg end padded)

@@ -4,6 +4,7 @@
 
 ** Fixes
 
++ Fix #24 hexadecimal values case changes when incrementing/decrementing.
 + Fix padding being ignored with block selection.
 + Fix #21 increment w/ selection ignores items before the cursor.
 + Fix padded argument is ignored on non-decimal types.
