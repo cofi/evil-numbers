@@ -3,33 +3,31 @@
 * In Development
 
 ** Additions
-
-+ Add =evil-numbers-case= option for the case to use for hexadecimal values (defaults to the current case).
+   + Add =evil-numbers-case= option for the case to use for hexadecimal values (defaults to the current case).
 
 ** Fixes
-
-+ Fix #24 hexadecimal values case changes when incrementing/decrementing.
-+ Fix padding being ignored with block selection.
-+ Fix #21 increment w/ selection ignores items before the cursor.
-+ Fix padded argument is ignored on non-decimal types.
-+ Fix #20 The cursor moves when increment/decrement fails.
-+ Fix #18 operating on bin/hex/octal failed w/ the cursor at the start.
-+ Fix #17 bin/octal/hex numbers don't support becoming negative.
-+ Fix hyphen-separated numbers handling.
-+ Fix auto-loading evil macros.
+   + Fix #24 hexadecimal values case changes when incrementing/decrementing.
+   + Fix padding being ignored with block selection.
+   + Fix #21 increment w/ selection ignores items before the cursor.
+   + Fix padded argument is ignored on non-decimal types.
+   + Fix #20 The cursor moves when increment/decrement fails.
+   + Fix #18 operating on bin/hex/octal failed w/ the cursor at the start.
+   + Fix #17 bin/octal/hex numbers don't support becoming negative.
+   + Fix hyphen-separated numbers handling.
+   + Fix auto-loading evil macros.
 
 * 0.5
 
 ** Additions
-+ Make padding optional.
-+ Add support for block selections.
-+ Add support for subscript and superscript numbers.
-+ Add g C-a like functionality
-  (i.e. increment first number in selection by 1, second one by 2 and so on).
-+ Pad negative numbers and add a plus sign if a negative number is turned into
-  a positive number (if padding is enabled).
+   + Make padding optional.
+   + Add support for block selections.
+   + Add support for subscript and superscript numbers.
+   + Add g C-a like functionality
+     (i.e. increment first number in selection by 1, second one by 2 and so on).
+   + Pad negative numbers and add a plus sign if a negative number is turned into
+     a positive number (if padding is enabled).
 
 ** Fixes
-+ Fix numbers being pushed out of selections.
+   + Fix numbers being pushed out of selections.
 
-  (e.g. calling inc-at-pt on =^9 9$= where =^$= denote the start and end of the selection would result in =10 9=).
+     (e.g. calling inc-at-pt on =^9 9$= where =^$= denote the start and end of the selection would result in =10 9=).
