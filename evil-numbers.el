@@ -509,7 +509,7 @@ number with a + sign."
            (evil-with-restriction beg end
              (goto-char beg)
              (while (evil-numbers--inc-at-pt-impl-with-search
-                     amount (point) (point-max) padded)
+                     (* amount count) (point) (point-max) padded)
                (when incremental
                  (setq count (+ count 1))))))))))
 
