@@ -80,6 +80,15 @@
   :type 'boolean
   :options '(nil t))
 
+(defcustom evil-numbers-case nil
+  "Case to use for hexadecimal numbers."
+  :group 'evil-numbers
+  :type
+  '(choice
+    (const :tag "Current Case" nil)
+    (const :tag "Upper Case" upcase)
+    (const :tag "Lower Case" downcase)))
+
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
@@ -328,8 +337,16 @@ replace number incremented by AMOUNT in BASE and return non-nil."
 
         ;; Maintain case.
         (when do-case
-          (when (eq -1 (or (evil-numbers--case-category str-prev -1) -1))
-            (setq str-next (downcase str-next))))
+          (cond
+           ;; Upper case (already set).
+           ((eq evil-numbers-case 'upcase)
+            nil)
+           ((eq evil-numbers-case 'downcase)
+            (setq str-next (downcase str-next)))
+           ;; Keep current case.
+           (t
+            (when (eq -1 (or (evil-numbers--case-category str-prev -1) -1))
+              (setq str-next (downcase str-next))))))
 
         ;; Replace the sign (as needed).
         (cond

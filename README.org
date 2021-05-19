@@ -35,6 +35,14 @@
      Set  to =t= if you want numbers to be padded with zeros (numbers with a leading zero are always padded).
      If you want both behaviors, all commands take an optional argument =padded=.
 
+   - =evil-numbers-case=
+
+     The case to use for hexadecimal numbers.
+
+     - =nil= Current case (default).
+     - '=upcase= Always upper case.
+     - '=downcase= Always lower case.
+
 ** Key Bindings
    Example key bindings:
 
