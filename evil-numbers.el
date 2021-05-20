@@ -10,7 +10,7 @@
 ;; URL: http://github.com/juliapath/evil-numbers
 ;; Git-Repository: git://github.com/juliapath/evil-numbers.git
 ;; Created: 2011-09-02
-;; Version: 0.5
+;; Version: 0.6
 ;; Package-Requires: ((emacs "24.1"))
 ;; Keywords: convenience tools
 

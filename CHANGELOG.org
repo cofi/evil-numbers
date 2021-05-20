@@ -1,6 +1,6 @@
 #+TITLE: Evil Numbers CHANGELOG
 
-* In Development
+* 0.6
 
 ** Additions
    + Add =evil-numbers-separator-chars= option to support separator characters,
