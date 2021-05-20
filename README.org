@@ -35,6 +35,13 @@
      Set  to =t= if you want numbers to be padded with zeros (numbers with a leading zero are always padded).
      If you want both behaviors, all commands take an optional argument =padded=.
 
+   - =evil-numbers-separator-chars=
+
+     This option to support separator characters, set to "_" or "," to support numeric literals such as:
+     =16_777_216= or =4,294,967,296=.
+
+     You may wish to set this as a buffer local variable to enable this only for languages that support separators.
+
    - =evil-numbers-case=
 
      The case to use for hexadecimal numbers.

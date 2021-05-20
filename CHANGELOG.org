@@ -3,6 +3,8 @@
 * In Development
 
 ** Additions
+   + Add =evil-numbers-separator-chars= option to support separator characters,
+     such as =16_777_216= or =4,294,967,296=.
    + Add =evil-numbers-case= option for the case to use for hexadecimal values (defaults to the current case).
 
 ** Fixes
