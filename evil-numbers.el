@@ -11,7 +11,7 @@
 ;; Git-Repository: git://github.com/juliapath/evil-numbers.git
 ;; Created: 2011-09-02
 ;; Version: 0.6
-;; Package-Requires: ((emacs "24.1"))
+;; Package-Requires: ((emacs "24.1") (evil "1.2.0"))
 ;; Keywords: convenience tools
 
 ;; This file is not part of GNU Emacs.
