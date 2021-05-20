@@ -521,10 +521,8 @@ number with a + sign."
              ;; `forward-char' so that we do not match the number
              ;; directly behind us.
              ;;
-             ;; Check the range to avoid end-of-buffer warning.
-             ;; Harmless but happens with block selection every
-             ;; time which is unreasonably noisy.
-             (unless (>= (1+ (point)) (point-max))
+             ;; Check the range to avoid end-of-buffer warning or skipping to the next line.
+             (unless (>= (1+ (point)) (point-at-eol))
                (forward-char))
              (when (evil-numbers--inc-at-pt-impl-with-search
                     amount (point-at-bol) (point-at-eol) padded)

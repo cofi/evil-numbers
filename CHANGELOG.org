@@ -6,6 +6,7 @@
    + Add =evil-numbers-case= option for the case to use for hexadecimal values (defaults to the current case).
 
 ** Fixes
+   + Fix #25 increment steps to the next line.
    + Fix #24 hexadecimal values case changes when incrementing/decrementing.
    + Fix padding being ignored with block selection.
    + Fix #21 increment w/ selection ignores items before the cursor.
