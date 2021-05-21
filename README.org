@@ -90,6 +90,12 @@
 * Known Bugs
   See http://github.com/juliapath/evil-numbers/issues
 
+* Similar Packages
+  - [[https://melpa.org/#/mouse-slider-mode][Mouse Slider Package]]
+  - [[https://melpa.org/#/number][Number Package]]
+  - [[https://melpa.org/#/shift-number][Shift Number Package]]
+  - [[https://www.emacswiki.org/emacs/IncrementNumber][Emacs Wiki (Increment Number)]]
+
 * Contributors
   - Matthew Fidler <matthew.fidler@gmail.com>
   - Michael Markert <markert.michael@gmail.com>
