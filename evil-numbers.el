@@ -99,6 +99,13 @@ Otherwise nil will disable this functionality."
     (const :tag "Upper Case" upcase)
     (const :tag "Lower Case" downcase)))
 
+(defcustom evil-numbers-use-cursor-at-end-of-number nil
+  "When non-nil, recognize numbers directly before the cursor.
+
+This doesn't match VIM's behavior."
+  :group 'evil-numbers
+  :type 'boolean
+  :options '(nil t))
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
@@ -601,12 +608,16 @@ result in a number with a + sign."
    (t
     (let ((point-next
            (save-excursion
-             ;; `forward-char' so that we do not match the number
-             ;; directly behind us.
-             ;;
-             ;; Check the range to avoid end-of-buffer warning or skipping to the next line.
-             (unless (>= (1+ (point)) (point-at-eol))
-               (forward-char))
+             ;; While the default (nil) is VIM's default behavior,
+             ;; users may want to change this, see: #26.
+             (unless evil-numbers-use-cursor-at-end-of-number
+               ;; `forward-char' so that we do not match the number
+               ;; directly behind us.
+               ;;
+               ;; Check the range to avoid end-of-buffer warning
+               ;; or skipping to the next line.
+               (unless (>= (1+ (point)) (point-at-eol))
+                 (forward-char)))
              (when (evil-numbers--inc-at-pt-impl-with-search
                     amount (point-at-bol) (point-at-eol) padded)
                (point)))))
