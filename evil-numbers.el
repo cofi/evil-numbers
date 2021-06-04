@@ -221,17 +221,17 @@ DIR: Direction to step in (1 -1).
 CH-NUM: Number of characters to step.
 LIMIT: Point which will not be stepped past."
   (let* ((is-forward (< 0 dir))
-           (skip-chars-fn (if is-forward
-                              #'skip-chars-forward
-                            #'skip-chars-backward))
-           (clamp-fn (if is-forward
-                         #'min
-                       #'max))
+         (skip-chars-fn (if is-forward
+                            #'skip-chars-forward
+                          #'skip-chars-backward))
+         (clamp-fn (if is-forward
+                       #'min
+                     #'max))
          (skipped
-         (abs (funcall
-               skip-chars-fn ch-skip
-               ;; Limit.
-               (funcall clamp-fn (+ (point) (* ch-num dir)) limit)))))
+          (abs (funcall
+                skip-chars-fn ch-skip
+                ;; Limit.
+                (funcall clamp-fn (+ (point) (* ch-num dir)) limit)))))
 
     ;; Step over single separators, as long as there is a number after them.
     ;; Allow '100,123' and '16_777_216' to be handled as single numbers.
