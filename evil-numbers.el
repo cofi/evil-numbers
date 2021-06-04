@@ -383,6 +383,7 @@ Each item in MATCH-CHARS is a cons pair.
      beg end
      padded
      do-case
+     range-check-fn
      number-xform-fn
      decode-fn encode-fn)
   "Perform the increment/decrement on the current line.
@@ -393,16 +394,24 @@ SIGN-GROUP is the match group used for the sign ('-' or '+').
 
 When PADDED is non-nil,
 the number keeps it's current width (with leading zeroes).
+When DO-NUM-AFTER-CURSOR is non-nil,
+Don't include numbers directly before the cursor (VIM's default behavior).
 
 When all characters are found in sequence, evaluate the number in BASE,
 replacing it by the result of NUMBER-XFORM-FN and return non-nil."
   (save-match-data
-    (when (save-excursion
-            ;; Skip backwards (as needed), there may be no
-            ;; characters to skip back, so don't check the result.
-            (evil-numbers--match-from-skip-chars match-chars -1 beg nil nil)
-            ;; Skip forwards from the beginning, setting match data.
-            (evil-numbers--match-from-skip-chars match-chars 1 end t t))
+    (when (and
+           (save-excursion
+             ;; Skip backwards (as needed), there may be no
+             ;; characters to skip back, so don't check the result.
+             (evil-numbers--match-from-skip-chars match-chars -1 beg nil nil)
+             ;; Skip forwards from the beginning, setting match data.
+             (evil-numbers--match-from-skip-chars match-chars 1 end t t))
+
+           ;; Either there is no range checking or the range must
+           ;; be accepted by the caller.
+           (or (null range-check-fn)
+               (funcall range-check-fn (match-beginning 0) (match-end 0))))
 
       (goto-char (match-end num-group))
       (let* ((sep-char
@@ -459,7 +468,7 @@ replacing it by the result of NUMBER-XFORM-FN and return non-nil."
 
       t)))
 
-(defun evil-numbers--inc-at-pt-impl (beg end padded number-xform-fn)
+(defun evil-numbers--inc-at-pt-impl (beg end padded range-check-fn number-xform-fn)
   "Increment the number at the current POINT by AMOUNT limited by BEG and END.
 
 Keep padding when PADDED is non-nil.
@@ -471,7 +480,7 @@ Return non-nil on success, leaving the point at the end of the number."
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("+-" \?) ("0" 1) ("bB" 1) ("01" + ,evil-numbers-separator-chars))
     1 4 ;; Sign & number groups.
-    2 beg end padded nil number-xform-fn
+    2 beg end padded nil range-check-fn number-xform-fn
     #'identity #'identity)
 
    ;; Find octal literals:
@@ -480,7 +489,7 @@ Return non-nil on success, leaving the point at the end of the number."
 
     `(("+-" \?) ("0" 1) ("oO" 1) ("0-7" + ,evil-numbers-separator-chars))
     1 4 ;; Sign & number groups.
-    8 beg end padded nil number-xform-fn
+    8 beg end padded nil range-check-fn number-xform-fn
     #'identity #'identity)
 
    ;; Find hex literals:
@@ -488,7 +497,7 @@ Return non-nil on success, leaving the point at the end of the number."
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("+-" \?) ("0" 1) ("xX" 1) ("[:xdigit:]" + ,evil-numbers-separator-chars))
     1 4 ;; Sign & number groups.
-    16 beg end padded t number-xform-fn
+    16 beg end padded t range-check-fn number-xform-fn
     #'identity #'identity)
 
    ;; Find decimal literals:
@@ -496,24 +505,24 @@ Return non-nil on success, leaving the point at the end of the number."
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("+-" \?) ("0123456789" + ,evil-numbers-separator-chars))
     1 2 ;; Sign & number groups.
-    10 beg end padded nil number-xform-fn
+    10 beg end padded nil range-check-fn number-xform-fn
     #'identity #'identity)
 
    ;; Find decimal literals (super-script).
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("⁺⁻" \?) (,evil-numbers--chars-superscript + nil))
     1 2 ;; Sign & number groups.
-    10 beg end padded nil number-xform-fn
+    10 beg end padded nil range-check-fn number-xform-fn
     #'evil-numbers--decode-super #'evil-numbers--encode-super)
 
    ;; Find decimal literals (sub-script).
    (evil-numbers--inc-at-pt-impl-with-match-chars
     `(("₊₋" \?) (,evil-numbers--chars-subscript + nil))
     1 2 ;; Sign & number groups.
-    10 beg end padded nil number-xform-fn
+    10 beg end padded nil range-check-fn number-xform-fn
     #'evil-numbers--decode-sub #'evil-numbers--encode-sub)))
 
-(defun evil-numbers--inc-at-pt-impl-with-search (amount beg end padded)
+(defun evil-numbers--inc-at-pt-impl-with-search (amount beg end padded range-check-fn)
   "Increment the number at the current POINT by AMOUNT limited by BEG and END.
 
 Keep padding when PADDED is non-nil.
@@ -538,6 +547,7 @@ Return non-nil on success, leaving the point at the end of the number."
                       (max beg (point-at-bol))
                       (min end (point-at-eol))
                       padded
+                      range-check-fn
                       #'(lambda (n) (+ n amount)))
                  (setq found t)))
 
@@ -599,7 +609,7 @@ result in a number with a + sign."
            (evil-with-restriction beg end
              (goto-char beg)
              (while (evil-numbers--inc-at-pt-impl-with-search
-                     (* amount count) (point) (point-max) padded)
+                     (* amount count) (point) (point-max) padded nil)
                (when incremental
                  (setq count (+ count 1))))))))))
 
@@ -608,18 +618,22 @@ result in a number with a + sign."
    (t
     (let ((point-next
            (save-excursion
-             ;; While the default (nil) is VIM's default behavior,
-             ;; users may want to change this, see: #26.
-             (unless evil-numbers-use-cursor-at-end-of-number
-               ;; `forward-char' so that we do not match the number
-               ;; directly behind us.
-               ;;
-               ;; Check the range to avoid end-of-buffer warning
-               ;; or skipping to the next line.
-               (unless (>= (1+ (point)) (point-at-eol))
-                 (forward-char)))
              (when (evil-numbers--inc-at-pt-impl-with-search
-                    amount (point-at-bol) (point-at-eol) padded)
+                    amount (point-at-bol) (point-at-eol) padded
+                    ;; Optional range checking function, only needed when
+                    ;; `evil-numbers-use-cursor-at-end-of-number' is not nil.
+                    (cond
+                     (evil-numbers-use-cursor-at-end-of-number
+                      nil)
+                     (t
+                      ;; VIM doesn't allow the number directly before
+                      ;; the cursor to be manipulated.
+                      ;; This function checks the range to disallow that case.
+                      ;;
+                      ;; Note that this turns out to be simpler than enforcing
+                      ;; the limit in the searching logic.
+                      (let ((point-init (point)))
+                        (lambda (_beg end) (< point-init end))))))
                (point)))))
 
       (if (null point-next)
