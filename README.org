@@ -50,7 +50,7 @@
    - =evil-numbers-use-cursor-at-end-of-number= ::
      Support matching numbers directly before the cursor.
 
-     This is off by default this is not done as it doesn't match VIM's default behavior.
+     This is off by default as it doesn't follow VIM's behavior.
 
 ** Key Bindings
    Example key bindings:
