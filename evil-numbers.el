@@ -394,8 +394,9 @@ SIGN-GROUP is the match group used for the sign ('-' or '+').
 
 When PADDED is non-nil,
 the number keeps it's current width (with leading zeroes).
-When DO-NUM-AFTER-CURSOR is non-nil,
-Don't include numbers directly before the cursor (VIM's default behavior).
+
+When RANGE-CHECK-FN is non-nil, it's called with the match beginning & end.
+A non nil result causes this function to return nil.
 
 When all characters are found in sequence, evaluate the number in BASE,
 replacing it by the result of NUMBER-XFORM-FN and return non-nil."
@@ -473,6 +474,9 @@ replacing it by the result of NUMBER-XFORM-FN and return non-nil."
 
 Keep padding when PADDED is non-nil.
 
+See `evil-numbers--inc-at-pt-impl-with-match-chars' for details on
+RANGE-CHECK-FN and NUMBER-XFORM-FN.
+
 Return non-nil on success, leaving the point at the end of the number."
   (or
    ;; Find binary literals:
@@ -526,6 +530,9 @@ Return non-nil on success, leaving the point at the end of the number."
   "Increment the number at the current POINT by AMOUNT limited by BEG and END.
 
 Keep padding when PADDED is non-nil.
+
+See `evil-numbers--inc-at-pt-impl-with-match-chars' for details on
+RANGE-CHECK-FN.
 
 Return non-nil on success, leaving the point at the end of the number."
   (let ((found nil))
