@@ -324,7 +324,7 @@ Each item in MATCH-CHARS is a cons pair.
             (evil-numbers--skip-chars-impl
              ch-skip ch-sep-optional dir 1 limit))
            (t
-            (error (format "Unknown type %S" ch-skip))))
+            (error (format "Unknown type %S (internal error)" ch-skip))))
 
           ;; End of the match.
           (when do-match
@@ -643,13 +643,16 @@ result in a number with a + sign."
                         (lambda (_beg end) (< point-init end))))))
                (point)))))
 
-      (if (null point-next)
-          (error "No number at point or until end of line")
-
+      (cond
+       ((null point-next)
+        ;; Point not found, note that VIM doesn't report anything in this case.
+        (message "No number at point or until end of line")
+        nil)
+       (t
         ;; Moves point one position back to conform with VIM,
         ;; see `evil-adjust-cursor' for details.
         (goto-char (1- point-next))
-        t)))))
+        t))))))
 
 ;;;###autoload (autoload 'evil-numbers/dec-at-pt "evil-numbers" nil t)
 (evil-define-operator evil-numbers/dec-at-pt

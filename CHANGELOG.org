@@ -6,6 +6,10 @@
    + =evil-numbers-use-cursor-at-end-of-number= option to match numbers directly before the cursor
      (diverging from VIM's default behavior).
 
+** Changes
+   + Use =message= instead of =error= when no number is found
+     (don't error since VIM doesn't use an error in this case).
+
 ** Fixes
    + Fix #27 Number directly before the cursor manipulated when the cursor can't move forward.
 
