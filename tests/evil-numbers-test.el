@@ -98,10 +98,14 @@
 (ert-deftest simple-hex ()
   "Check hexadecimal is detected at all parts."
   (let ((text-initial " 0xFFF "))
-    (dolist (keys-offset (list "" "l" "ll" "lll" "llll" "lllll"))
+    ;; Test incrementing at different offsets,
+    ;; this ensures scanning the hexadecimal is handled properly.
+    (dotimes (i 6)
       (with-evil-numbers-test
        text-initial
-       (simulate-input (kbd keys-offset) (kbd "C-a") "a|")
+       (dotimes (_ i)
+         (simulate-input "l"))
+       (simulate-input (kbd "C-a") "a|")
        (should (equal " 0x1000| " (buffer-string)))))
     (with-evil-numbers-test
      text-initial
@@ -113,10 +117,13 @@
   "Check hexadecimal is detected at all parts."
   (let ((text-expected " -0x1| ")
         (text-initial " 0x0 "))
-    (with-evil-numbers-test
-     text-initial
-     (simulate-input (kbd "C-x") "a|" (kbd "<escape>"))
-     (should (equal text-expected (buffer-string))))))
+    (dotimes (i 4)
+      (with-evil-numbers-test
+       text-initial
+       (dotimes (_ i)
+         (simulate-input "l"))
+       (simulate-input (kbd "C-x") "a|" (kbd "<escape>"))
+       (should (equal text-expected (buffer-string)))))))
 
 (ert-deftest simple-nop-non-number ()
   "Do nothing, the value under the cursor is not a number."
@@ -157,18 +164,23 @@
 
 (ert-deftest simple-separator-chars ()
   "Check a single number increments."
-  (let ((text-expected "111_111_111|")
-        (text-initial "111_111_110"))
-    (with-evil-numbers-test
-     text-initial
-     (setq-local evil-numbers-separator-chars "_")
-     (simulate-input (kbd "C-a") "a|")
-     (should (equal text-expected (buffer-string))))))
+  (let ((text-expected "1_11_111|")
+        (text-initial "1_11_110"))
+    ;; Test at different offsets to ensure
+    ;; there are no bugs similar to #18 occurring.
+    (dotimes (i 8)
+      (with-evil-numbers-test
+       text-initial
+       (setq-local evil-numbers-separator-chars "_")
+       (dotimes (_ i)
+         (simulate-input "l"))
+       (simulate-input (kbd "C-a") "a|")
+       (should (equal text-expected (buffer-string)))))))
 
 (ert-deftest simple-separator-chars-disabled ()
   "Check a single number increments."
-  (let ((text-expected "111|_111_111")
-        (text-initial "110_111_111"))
+  (let ((text-expected "2|_11_111")
+        (text-initial "1_11_111"))
     (with-evil-numbers-test
      text-initial
      (setq-local evil-numbers-separator-chars nil)
