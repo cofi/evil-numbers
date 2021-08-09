@@ -1,4 +1,4 @@
-;;; evil-numbers-test.el --- Testing -*- lexical-binding: t -*-
+;;; evil-numbers-tests.el --- Testing -*- lexical-binding: t -*-
 
 ;; This file is not part of GNU Emacs.
 
@@ -17,7 +17,7 @@
 
 ;;; Commentary:
 
-;; See: `evil-numbers-test.sh' for launching this script.
+;; See: `evil-numbers-tests.sh' for launching this script.
 
 ;; TODO: tests that handle bugs. #20, #21, #24, #26, #27
 ;; Bugs fixed in:
