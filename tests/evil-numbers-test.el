@@ -134,14 +134,32 @@
      (simulate-input (kbd "C-a") "a|")
      (should (equal text-expected (buffer-string))))))
 
+(ert-deftest simple-nop-non-number-signed ()
+  "Do nothing, the value under the cursor is not a number, but it has a sign."
+  (let ((text-expected "-|X")
+        (text-initial "-X"))
+    (with-evil-numbers-test
+     text-initial
+     (simulate-input (kbd "C-a") "a|")
+     (should (equal text-expected (buffer-string))))))
+
 ;; See bug #25.
-(ert-deftest simple-nop-non-number-with-newline ()
+(ert-deftest simple-nop-non-number-with-newline-before ()
   "Do nothing, ensure the newline isn't stepped over."
-  (let ((text-expected "X|\n0")
-        (text-initial "X\n0"))
+  (let ((text-expected "|\n0")
+        (text-initial "\n0"))
     (with-evil-numbers-test
      text-initial
      (simulate-input (kbd "<end>") (kbd "C-a") "a|")
+     (should (equal text-expected (buffer-string))))))
+
+(ert-deftest simple-nop-non-number-with-newline-after ()
+  "Do nothing, ensure the newline isn't stepped over."
+  (let ((text-expected "0\n|")
+        (text-initial "0\n"))
+    (with-evil-numbers-test
+     text-initial
+     (simulate-input "j" (kbd "C-a") "a|")
      (should (equal text-expected (buffer-string))))))
 
 (ert-deftest simple-nop-cursor-after-decimal ()
