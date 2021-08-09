@@ -113,16 +113,30 @@
      (should (equal " 0xFFF |" (buffer-string))))))
 
 ;; See bug #17.
-(ert-deftest simple-hex-negative ()
-  "Check hexadecimal is detected at all parts."
+(ert-deftest simple-hex-positive-to-negative ()
+  "Change negative hex to negative."
   (let ((text-expected " -0x1| ")
-        (text-initial " 0x0 "))
+        (text-initial " 0x1 "))
     (dotimes (i 4)
       (with-evil-numbers-test
        text-initial
        (dotimes (_ i)
          (simulate-input "l"))
-       (simulate-input (kbd "C-x") "a|" (kbd "<escape>"))
+       (simulate-input (kbd "C-x") (kbd "C-x"))
+       (simulate-input "a|" (kbd "<escape>"))
+       (should (equal text-expected (buffer-string)))))))
+
+(ert-deftest simple-hex-negative-to-positive ()
+  "Change negative hex to positive."
+  (let ((text-expected " 0x1| ")
+        (text-initial " -0x1 "))
+    (dotimes (i 5)
+      (with-evil-numbers-test
+       text-initial
+       (dotimes (_ i)
+         (simulate-input "l"))
+       (simulate-input (kbd "C-a") (kbd "C-a"))
+       (simulate-input "a|" (kbd "<escape>"))
        (should (equal text-expected (buffer-string)))))))
 
 (ert-deftest simple-nop-non-number ()
