@@ -19,7 +19,7 @@
 
 ;; See: `evil-numbers-tests.sh' for launching this script.
 
-;; TODO: tests that handle bugs. #20, #21, #24, #26, #27
+;; TODO: tests that handle bugs: #20, #21, #24, #26, #27.
 ;; Bugs fixed in:
 ;; c37a4cf92a9cf8aa9f8bd752ea856a9d1bc6c84c
 
@@ -27,6 +27,8 @@
 
 ;; ;; Caller ensures this.
 ;; (require 'evil-numbers)
+
+;;; Code:
 
 ;; ---------------------------------------------------------------------------
 ;; Global State
@@ -44,23 +46,25 @@
 ;; Internal Functions/Macros
 
 (defmacro simulate-input (&rest keys)
-  "Helper macro to simulate input."
+  "Helper macro to simulate input using KEYS."
   (declare (indent 1))
   `(let ((keys-list (list ,@keys)))
      (dolist (keys keys-list)
        (execute-kbd-macro keys))))
 
-(defun buffer-reset-text (initial-buffer)
+(defun buffer-reset-text (initial-buffer-text)
+  "Use INITIAL-BUFFER-TEXT to initialize the buffer with text."
   (buffer-disable-undo)
   (simulate-input (kbd "i"))
   (erase-buffer)
   ;; Don't move the cursor.
-  (save-excursion (insert initial-buffer))
+  (save-excursion (insert initial-buffer-text))
   (simulate-input (kbd "<escape>"))
   (buffer-enable-undo))
 
 (defmacro with-evil-numbers-test (initial-buffer-text &rest body)
-  "Run BODY adding any message call to the MESSAGE-LIST list."
+  "Run BODY adding any message call to the MESSAGE-LIST list.
+Setting the buffers text to INITIAL-BUFFER-TEXT."
   (declare (indent 1))
   ;; Messages make test output noisy (mainly evil mode switching messages).
   ;; Disable when debugging tests.
@@ -310,3 +314,6 @@
       (kbd "C-M-a")             ;; Increment.
       "a|")                     ;; Show cursor location.
      (should (equal text-expected (buffer-string))))))
+
+(provide 'evil-numbers-tests)
+;;; evil-numbers-tests.el ends here
