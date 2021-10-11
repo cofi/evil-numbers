@@ -52,10 +52,14 @@
 
 ;; or only in evil's normal and visual state:
 
-;; (evil-define-key '(normal visual) 'global (kbd "C-c +") 'evil-numbers/inc-at-pt)
-;; (evil-define-key '(normal visual) 'global (kbd "C-c -") 'evil-numbers/dec-at-pt)
-;; (evil-define-key '(normal visual) 'global (kbd "C-c C-+") 'evil-numbers/inc-at-pt-incremental)
-;; (evil-define-key '(normal visual) 'global (kbd "C-c C--") 'evil-numbers/dec-at-pt-incremental)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c +")
+;;                  'evil-numbers/inc-at-pt)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c -")
+;;                  'evil-numbers/dec-at-pt)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c C-+")
+;;                  'evil-numbers/inc-at-pt-incremental)
+;; (evil-define-key '(normal visual) 'global (kbd "C-c C--")
+;;                  'evil-numbers/dec-at-pt-incremental)
 
 ;; Usage:
 ;; Go and play with your numbers!
@@ -76,7 +80,6 @@
 
 (defcustom evil-numbers-pad-default nil
   "Whether numbers are padded by default."
-  :group 'evil-numbers
   :type 'boolean
   :options '(nil t))
 
@@ -87,12 +90,10 @@ This value is a string containing separator characters,
 typically \"_\" or \",\" which are allowed in numeric literals in some systems.
 
 Otherwise nil will disable this functionality."
-  :group 'evil-numbers
   :type '(choice (const nil) string))
 
 (defcustom evil-numbers-case nil
   "Case to use for hexadecimal numbers."
-  :group 'evil-numbers
   :type
   '(choice
     (const :tag "Current Case" nil)
@@ -103,7 +104,6 @@ Otherwise nil will disable this functionality."
   "When non-nil, recognize numbers directly before the cursor.
 
 This doesn't match VIM's behavior."
-  :group 'evil-numbers
   :type 'boolean
   :options '(nil t))
 
@@ -591,9 +591,9 @@ PADDED is whether numbers should be padded (e.g. 10 -> 09).
 -    t: is the opposite of `evil-numbers-pad-default',
 - '(t): enables padding and '(nil) disables padding.
 
-Numbers with a leading zero are always padded. Signs are preserved when
-padding is enabled, i.e. increasing a negative number to a positive will
-result in a number with a + sign."
+Numbers with a leading zero are always padded.
+Signs are preserved when padding is enabled, for example: increasing a
+negative number to a positive will result in a number with a + sign."
   :motion nil
   (interactive "*<c><R>")
 
@@ -686,4 +686,9 @@ and so on."
   (evil-numbers/inc-at-pt (- (or amount 1)) beg end type 'incremental padded))
 
 (provide 'evil-numbers)
+
+;; Local Variables:
+;; fill-column: 80
+;; End:
+
 ;;; evil-numbers.el ends here
