@@ -1,6 +1,6 @@
 #+TITLE: Evil Numbers CHANGELOG
 
-* in development
+* 0.7
 
 ** Additions
    + =evil-numbers-use-cursor-at-end-of-number= option to match numbers directly before the cursor
