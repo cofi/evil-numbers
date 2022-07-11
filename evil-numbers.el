@@ -587,9 +587,9 @@ INCREMENTAL causes the first number to be increased by 1*AMOUNT,
 the second by 2*AMOUNT and so on.
 
 PADDED is whether numbers should be padded (e.g. 10 -> 09).
--  nil: is default behavior set by `evil-numbers-pad-default',
--    t: is the opposite of `evil-numbers-pad-default',
-- '(t): enables padding and '(nil) disables padding.
+-    nil: is default behavior set by `evil-numbers-pad-default',
+-      t: is the opposite of `evil-numbers-pad-default',
+- `'(t)': enables padding and `'(nil)' disables padding.
 
 Numbers with a leading zero are always padded.
 Signs are preserved when padding is enabled, for example: increasing a
