@@ -68,6 +68,10 @@
 
 (require 'evil)
 
+(eval-when-compile
+  ;; For `pcase-dolist'.
+  (require 'pcase))
+
 ;; ---------------------------------------------------------------------------
 ;; Custom Variables
 
@@ -292,43 +296,41 @@ Each item in MATCH-CHARS is a cons pair.
       (unless is-forward
         (setq match-chars (reverse match-chars)))
 
-      (while match-chars
-        (pcase-let ((`(,ch-skip ,ch-num ,ch-sep-optional) (pop match-chars)))
+      (pcase-dolist (`(,ch-skip ,ch-num ,ch-sep-optional) match-chars)
+        ;; Beginning of the match.
+        (when do-match
+          (push (point) match-list))
 
-          ;; Beginning of the match.
-          (when do-match
-            (push (point) match-list))
+        (cond
+         ((integerp ch-num)
+          (let ((skipped
+                 (evil-numbers--skip-chars-impl
+                  ch-skip ch-sep-optional dir ch-num limit)))
+            (when do-check
+              (unless (eq skipped ch-num)
+                (throw 'result nil)))))
+         ((eq ch-num '+)
+          (let ((skipped
+                 (evil-numbers--skip-chars-impl
+                  ch-skip ch-sep-optional dir most-positive-fixnum limit)))
+            (when do-check
+              (unless (>= skipped 1)
+                (throw 'result nil)))))
 
-          (cond
-           ((integerp ch-num)
-            (let ((skipped
-                   (evil-numbers--skip-chars-impl
-                    ch-skip ch-sep-optional dir ch-num limit)))
-              (when do-check
-                (unless (eq skipped ch-num)
-                  (throw 'result nil)))))
-           ((eq ch-num '+)
-            (let ((skipped
-                   (evil-numbers--skip-chars-impl
-                    ch-skip ch-sep-optional dir most-positive-fixnum limit)))
-              (when do-check
-                (unless (>= skipped 1)
-                  (throw 'result nil)))))
+         ;; No length checking needed as zero is acceptable.
+         ;; Skip these characters if they exist.
+         ((eq ch-num '*)
+          (evil-numbers--skip-chars-impl
+           ch-skip ch-sep-optional dir most-positive-fixnum limit))
+         ((eq ch-num '\?)
+          (evil-numbers--skip-chars-impl
+           ch-skip ch-sep-optional dir 1 limit))
+         (t
+          (error (format "Unknown type %S (internal error)" ch-skip))))
 
-           ;; No length checking needed as zero is acceptable.
-           ;; Skip these characters if they exist.
-           ((eq ch-num '*)
-            (evil-numbers--skip-chars-impl
-             ch-skip ch-sep-optional dir most-positive-fixnum limit))
-           ((eq ch-num '\?)
-            (evil-numbers--skip-chars-impl
-             ch-skip ch-sep-optional dir 1 limit))
-           (t
-            (error (format "Unknown type %S (internal error)" ch-skip))))
-
-          ;; End of the match.
-          (when do-match
-            (push (point) match-list))))
+        ;; End of the match.
+        (when do-match
+          (push (point) match-list)))
 
       ;; Match 0 for the full range (expected at the beginning).
       (when do-match
