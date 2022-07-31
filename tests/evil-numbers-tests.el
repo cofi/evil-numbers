@@ -25,8 +25,9 @@
 
 (require 'ert)
 
-;; ;; Caller ensures this.
-;; (require 'evil-numbers)
+(setq evil-numbers-tests-basedir (concat (file-name-directory load-file-name) ".."))
+(add-to-list 'load-path evil-numbers-tests-basedir)
+(require 'evil-numbers)
 
 ;;; Code:
 
