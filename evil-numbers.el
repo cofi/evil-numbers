@@ -165,9 +165,11 @@ This doesn't match VIM's behavior."
         (result (list)))
     (while str-dst-rev
       (let ((ch-src (pop str-src-rev)))
-        (if (and ch-src (memq ch-src sep-chars-list))
-            (push ch-src result)
-          (push (pop str-dst-rev) result))))
+        (cond
+         ((and ch-src (memq ch-src sep-chars-list))
+          (push ch-src result))
+         (t
+          (push (pop str-dst-rev) result)))))
     (apply #'string result)))
 
 ;; ---------------------------------------------------------------------------
@@ -184,13 +186,19 @@ This doesn't match VIM's behavior."
 -     nil: Mixed case."
   (let ((str-dn (downcase str))
         (str-up (upcase str)))
-    (if (string-equal str str-dn)
-        (if (string-equal str str-up)
-            default
-          -1)
-      (if (string-equal str str-up)
-          1
-        nil))))
+    (cond
+     ((string-equal str str-dn)
+      (cond
+       ((string-equal str str-up)
+        default)
+       (t
+        -1)))
+     (t
+      (cond
+       ((string-equal str str-up)
+        1)
+       (t
+        nil))))))
 
 (defun evil-numbers--format-binary (number &optional width fillchar)
   "Format NUMBER as binary.
@@ -203,9 +211,11 @@ representation of NUMBER is smaller."
       (setq number (truncate number 2)))
     (let ((len (length nums)))
       (apply #'concat
-             (if (and width (< len width))
-                 (make-string (- width len) fillchar)
-               "")
+             (cond
+              ((and width (< len width))
+               (make-string (- width len) fillchar))
+              (t
+               ""))
              nums))))
 
 (defun evil-numbers--format (num width base)
@@ -232,13 +242,17 @@ CH-NUM: Number of characters to step.
 LIMIT: Point which will not be stepped past."
   (let* ((is-forward (< 0 dir))
          (skip-chars-fn
-          (if is-forward
-              #'skip-chars-forward
-            #'skip-chars-backward))
+          (cond
+           (is-forward
+            #'skip-chars-forward)
+           (t
+            #'skip-chars-backward)))
          (clamp-fn
-          (if is-forward
-              #'min
-            #'max))
+          (cond
+           (is-forward
+            #'min)
+           (t
+            #'max)))
          (skipped
           (abs
            (funcall skip-chars-fn
@@ -307,9 +321,11 @@ Each item in MATCH-CHARS is a cons pair.
            (match-list (list)))
 
       ;; Sanity check.
-      (when (if is-forward
-                (> (point) limit)
-              (< (point) limit))
+      (when (cond
+             (is-forward
+              (> (point) limit))
+             (t
+              (< (point) limit)))
         (error "Limit is on wrong side of point (internal error)"))
 
       (unless is-forward
@@ -382,9 +398,11 @@ Each item in MATCH-CHARS is a cons pair.
 
 (defun evil-numbers--translate-with-alist (alist string)
   "Translate every symbol in STRING using ALIST."
-  (funcall (if (stringp string)
-               #'concat
-             #'identity)
+  (funcall (cond
+            ((stringp string)
+             #'concat)
+            (t
+             #'identity))
            (mapcar (lambda (c) (cdr (assoc c alist))) string)))
 
 (defun evil-numbers--encode-super (x)
@@ -454,18 +472,22 @@ replacing it by the result of NUMBER-XFORM-FN and return non-nil."
                         (match-string num-group))))
 
              (str-prev-strip
-              (if sep-char
-                  (evil-numbers--strip-chars str-prev sep-char)
-                str-prev))
+              (cond
+               (sep-char
+                (evil-numbers--strip-chars str-prev sep-char))
+               (t
+                str-prev)))
 
              (num-prev (string-to-number str-prev-strip base))
              (num-next (funcall number-xform-fn num-prev))
              (str-next
               (evil-numbers--format
                (abs num-next)
-               (if padded
-                   (- (match-end num-group) (match-beginning num-group))
-                 1)
+               (cond
+                (padded
+                 (- (match-end num-group) (match-beginning num-group)))
+                (t
+                 1))
                base)))
 
         ;; Maintain case.
@@ -654,21 +676,27 @@ negative number to a positive will result in a number with a + sign."
 
   (setq amount (or amount 1))
   (setq padded
-        (if (consp padded)
-            (car padded)
-          (funcall (if padded
-                       #'not
-                     #'identity)
-                   evil-numbers-pad-default)))
+        (cond
+         ((consp padded)
+          (car padded))
+         (t
+          (funcall (cond
+                    (padded
+                     #'not)
+                    (t
+                     #'identity))
+                   evil-numbers-pad-default))))
   (cond
    ;; Handle selection (block or line).
    ;; Run this function in a loop (falling through to the `t' case).
    ((and beg end type)
     (let ((count 1))
       (save-excursion
-        (funcall (if (eq type 'block)
-                     (lambda (f) (evil-apply-on-block f beg end nil))
-                   (lambda (f) (funcall f beg end)))
+        (funcall (cond
+                  ((eq type 'block)
+                   (lambda (f) (evil-apply-on-block f beg end nil)))
+                  (t
+                   (lambda (f) (funcall f beg end))))
                  (lambda (beg end)
                    (evil-with-restriction
                     beg end (goto-char beg)
