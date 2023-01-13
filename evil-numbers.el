@@ -627,8 +627,8 @@ Return non-nil on success, leaving the point at the end of the number."
                       ;; The caller may use a range that spans lines to
                       ;; allow searching and finding items across
                       ;; multiple lines (currently used for selection).
-                      (max beg (point-at-bol))
-                      (min end (point-at-eol))
+                      (max beg (pos-bol))
+                      (min end (pos-eol))
                       padded
                       range-check-fn
                       (lambda (n) (+ n amount)))
@@ -711,7 +711,7 @@ negative number to a positive will result in a number with a + sign."
     (let ((point-next
            (save-excursion
              (when (evil-numbers--inc-at-pt-impl-with-search
-                    amount (point-at-bol) (point-at-eol) padded
+                    amount (pos-bol) (pos-eol) padded
                     ;; Optional range checking function, only needed when
                     ;; `evil-numbers-use-cursor-at-end-of-number' is not nil.
                     (cond
