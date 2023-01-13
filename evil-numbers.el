@@ -372,7 +372,7 @@ Each item in MATCH-CHARS is a cons pair.
          ((eq ch-num '\?)
           (evil-numbers--skip-chars-impl ch-skip ch-sep-optional dir 1 limit))
          (t
-          (error (format "Unknown type %S (internal error)" ch-skip))))
+          (error "Unknown type %S (internal error)" ch-skip)))
 
         ;; End of the match.
         (when do-match
@@ -631,7 +631,7 @@ Return non-nil on success, leaving the point at the end of the number."
                       (min end (point-at-eol))
                       padded
                       range-check-fn
-                      #'(lambda (n) (+ n amount)))
+                      (lambda (n) (+ n amount)))
                  (setq found t)))
 
               ;; Search failed, exit the loop.
