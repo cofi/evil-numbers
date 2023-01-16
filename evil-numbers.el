@@ -93,9 +93,7 @@
   :group 'convenience)
 
 (define-obsolete-variable-alias
-  'evil-numbers/padDefault
-  'evil-numbers-pad-default
-  "evil-numbers v0.6")
+  'evil-numbers/padDefault 'evil-numbers-pad-default "evil-numbers v0.6")
 
 (defcustom evil-numbers-pad-default nil
   "Whether numbers are padded by default."
@@ -282,21 +280,13 @@ LIMIT: Point which will not be stepped past."
                       (and (eq
                             1
                             (evil-numbers--skip-chars-impl
-                             ch-sep-optional
-                             nil
-                             dir
-                             1
-                             limit))
+                             ch-sep-optional nil dir 1 limit))
                            (progn
                              ;; Note counted towards 'skipped'
                              ;; as this character is to be ignored entirely.
                              (setq skipped-next
                                    (evil-numbers--skip-chars-impl
-                                    ch-skip
-                                    nil
-                                    dir
-                                    ch-num
-                                    limit))
+                                    ch-skip nil dir ch-num limit))
                              (unless (zerop skipped-next)
                                (setq point-next (point))
                                ;; Found (apply `point-new').
@@ -351,22 +341,14 @@ Each item in MATCH-CHARS is a cons pair.
          ((integerp ch-num)
           (let ((skipped
                  (evil-numbers--skip-chars-impl
-                  ch-skip
-                  ch-sep-optional
-                  dir
-                  ch-num
-                  limit)))
+                  ch-skip ch-sep-optional dir ch-num limit)))
             (when do-check
               (unless (eq skipped ch-num)
                 (throw 'result nil)))))
          ((eq ch-num '+)
           (let ((skipped
                  (evil-numbers--skip-chars-impl
-                  ch-skip
-                  ch-sep-optional
-                  dir
-                  most-positive-fixnum
-                  limit)))
+                  ch-skip ch-sep-optional dir most-positive-fixnum limit)))
             (when do-check
               (unless (>= skipped 1)
                 (throw 'result nil)))))
@@ -375,11 +357,7 @@ Each item in MATCH-CHARS is a cons pair.
          ;; Skip these characters if they exist.
          ((eq ch-num '*)
           (evil-numbers--skip-chars-impl
-           ch-skip
-           ch-sep-optional
-           dir
-           most-positive-fixnum
-           limit))
+           ch-skip ch-sep-optional dir most-positive-fixnum limit))
          ((eq ch-num '\?)
           (evil-numbers--skip-chars-impl ch-skip ch-sep-optional dir 1 limit))
          (t
@@ -461,11 +439,7 @@ replacing it by the result of NUMBER-XFORM-FN and return non-nil."
                  ;; Skip backwards (as needed), there may be no
                  ;; characters to skip back, so don't check the result.
                  (evil-numbers--match-from-skip-chars
-                  match-chars
-                  -1
-                  beg
-                  nil
-                  nil)
+                  match-chars -1 beg nil nil)
                  ;; Skip forwards from the beginning, setting match data.
                  (evil-numbers--match-from-skip-chars match-chars 1 end t t))
 
@@ -479,8 +453,7 @@ replacing it by the result of NUMBER-XFORM-FN and return non-nil."
              (str-prev
               (funcall decode-fn
                        (concat
-                        (match-string sign-group)
-                        (match-string num-group))))
+                        (match-string sign-group) (match-string num-group))))
 
              (str-prev-strip
               (cond
@@ -518,9 +491,7 @@ replacing it by the result of NUMBER-XFORM-FN and return non-nil."
           (unless (string-equal str-prev str-prev-strip)
             (setq str-next
                   (evil-numbers--strip-chars-apply
-                   str-prev
-                   str-next
-                   sep-char))))
+                   str-prev str-next sep-char))))
 
         ;; Replace the sign (as needed).
         (cond
