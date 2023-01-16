@@ -99,8 +99,7 @@
 
 (defcustom evil-numbers-pad-default nil
   "Whether numbers are padded by default."
-  :type 'boolean
-  :options '(nil t))
+  :type 'boolean)
 
 (defcustom evil-numbers-separator-chars nil
   "Support separator characters in numeric literals for visual grouping.
@@ -123,8 +122,7 @@ Otherwise nil will disable this functionality."
   "When non-nil, recognize numbers directly before the cursor.
 
 This doesn't match VIM's behavior."
-  :type 'boolean
-  :options '(nil t))
+  :type 'boolean)
 
 ;; ---------------------------------------------------------------------------
 ;; Internal Variables
