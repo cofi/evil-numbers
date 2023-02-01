@@ -260,16 +260,14 @@ Setting the buffers text to INITIAL-BUFFER-TEXT."
   "Block selection test."
   (let ((text-expected
          ;; format-next-line: off
-         (concat
-          "1| 0 0\n"
-          "1 0 0\n"
-          "1 0 0\n"))
+         (concat "1| 0 0\n"
+                 "1 0 0\n"
+                 "1 0 0\n"))
         (text-initial
          ;; format-next-line: off
-         (concat
-          "0 0 0\n"
-          "0 0 0\n"
-          "0 0 0\n")))
+         (concat "0 0 0\n"
+                 "0 0 0\n"
+                 "0 0 0\n")))
     (with-evil-numbers-test text-initial
       (simulate-input
         ;; Block select the column
@@ -285,16 +283,14 @@ Setting the buffers text to INITIAL-BUFFER-TEXT."
   "Block selection test."
   (let ((text-expected
          ;; format-next-line: off
-         (concat
-          "0 1| 0\n"
-          "0 1 0\n"
-          "0 1 0\n"))
+         (concat "0 1| 0\n"
+                 "0 1 0\n"
+                 "0 1 0\n"))
         (text-initial
          ;; format-next-line: off
-         (concat
-          "0 0 0\n"
-          "0 0 0\n"
-          "0 0 0\n")))
+         (concat "0 0 0\n"
+                 "0 0 0\n"
+                 "0 0 0\n")))
     (with-evil-numbers-test text-initial
       (simulate-input
         (kbd "w")
@@ -311,16 +307,14 @@ Setting the buffers text to INITIAL-BUFFER-TEXT."
   "Block selection test."
   (let ((text-expected
          ;; format-next-line: off
-         (concat
-          "0 0 1|\n"
-          "0 0 1\n"
-          "0 0 1\n"))
+         (concat "0 0 1|\n"
+                 "0 0 1\n"
+                 "0 0 1\n"))
         (text-initial
          ;; format-next-line: off
-         (concat
-          "0 0 0\n"
-          "0 0 0\n"
-          "0 0 0\n")))
+         (concat "0 0 0\n"
+                 "0 0 0\n"
+                 "0 0 0\n")))
     (with-evil-numbers-test text-initial
       (simulate-input
         (kbd "ww")
@@ -337,16 +331,14 @@ Setting the buffers text to INITIAL-BUFFER-TEXT."
   "Incremental block selection test."
   (let ((text-expected
          ;; format-next-line: off
-         (concat
-          "1| 0 0\n"
-          "2 0 0\n"
-          "3 0 0\n"))
+         (concat "1| 0 0\n"
+                 "2 0 0\n"
+                 "3 0 0\n"))
         (text-initial
          ;; format-next-line: off
-         (concat
-          "0 0 0\n"
-          "0 0 0\n"
-          "0 0 0\n")))
+         (concat "0 0 0\n"
+                 "0 0 0\n"
+                 "0 0 0\n")))
     (with-evil-numbers-test text-initial
       (simulate-input
         ;; Block select the column
@@ -361,16 +353,14 @@ Setting the buffers text to INITIAL-BUFFER-TEXT."
   "Incremental line selection test."
   (let ((text-expected
          ;; format-next-line: off
-         (concat
-          "1| 2 3\n"
-          "4 5 6\n"
-          "7 8 9\n"))
+         (concat "1| 2 3\n"
+                 "4 5 6\n"
+                 "7 8 9\n"))
         (text-initial
          ;; format-next-line: off
-         (concat
-          "0 0 0\n"
-          "0 0 0\n"
-          "0 0 0\n")))
+         (concat "0 0 0\n"
+                 "0 0 0\n"
+                 "0 0 0\n")))
     (with-evil-numbers-test text-initial
       (simulate-input
         ;; Block select the column
